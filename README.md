@@ -1,4 +1,6 @@
 # PropertyGuru Web Alert System
+[![Python application](https://github.com/droneshire/property_guru_upwork/actions/workflows/python-app.yml/badge.svg)](https://github.com/droneshire/property_guru_upwork/actions/workflows/python-app.yml)
+
 
 Web Scraping and Telegram/Email Alert System
 
