@@ -1,4 +1,3 @@
-import time
 import typing as T
 
 import requests
@@ -14,7 +13,6 @@ class Web2Client:
         base_url: str = "",
         rate_limit_delay: float = 5.0,
         dry_run: bool = False,
-        verbose: bool = False,
     ) -> None:
         self.dry_run = dry_run
         self.base_url = base_url
@@ -25,15 +23,21 @@ class Web2Client:
 
         self.requests = requests
 
-    def _get_request(
+    def get_request(
         self,
         url: str,
-        headers: T.Dict[str, T.Any] = {},
-        params: T.Dict[str, T.Any] = {},
+        headers: T.Optional[T.Dict[str, T.Any]] = None,
+        params: T.Optional[T.Dict[str, T.Any]] = None,
         timeout: float = 5.0,
     ) -> T.Any:
         if self.rate_limit_delay > 0.0:
             wait.wait(self.rate_limit_delay)
+
+        if headers is None:
+            headers = {}
+
+        if params is None:
+            params = {}
 
         try:
             return self.requests.request(
@@ -41,20 +45,29 @@ class Web2Client:
             ).json()
         except KeyboardInterrupt:
             raise
-        except:
+        except:  # pylint: disable=bare-except
             return {}
 
-    def _post_request(
+    def post_request(
         self,
         url: str,
-        json_data: T.Dict[str, T.Any] = {},
-        headers: T.Dict[str, T.Any] = {},
-        params: T.Dict[str, T.Any] = {},
+        json_data: T.Optional[T.Dict[str, T.Any]] = None,
+        headers: T.Optional[T.Dict[str, T.Any]] = None,
+        params: T.Optional[T.Dict[str, T.Any]] = None,
         timeout: float = 5.0,
         delay: float = 5.0,
     ) -> T.Any:
         if self.dry_run:
             return {}
+
+        if headers is None:
+            headers = {}
+
+        if params is None:
+            params = {}
+
+        if json_data is None:
+            json_data = {}
 
         if delay > 0.0:
             wait.wait(delay)
@@ -70,7 +83,7 @@ class Web2Client:
             ).json()
         except KeyboardInterrupt:
             raise
-        except:
+        except:  # pylint: disable=bare-except
             log.format_fail(f"Failed to post to {url}")
             return {}
 
@@ -79,12 +92,18 @@ class Web2Client:
         url: str,
         file_path: str,
         data: str,
-        headers: T.Dict[str, T.Any] = {},
-        params: T.Dict[str, T.Any] = {},
+        headers: T.Optional[T.Dict[str, T.Any]] = None,
+        params: T.Optional[T.Dict[str, T.Any]] = None,
         timeout: float = 5.0,
     ) -> None:
         if self.dry_run:
             return
+
+        if headers is None:
+            headers = {}
+
+        if params is None:
+            params = {}
 
         try:
             with self.requests.request(
@@ -96,13 +115,13 @@ class Web2Client:
                 timeout=timeout,
                 stream=True,
                 allow_redirects=True,
-            ) as r:
-                r.raise_for_status()
-                with open(file_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
+            ) as response:
+                response.raise_for_status()
+                with open(file_path, "wb") as outfile:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        outfile.write(chunk)
         except KeyboardInterrupt:
             raise
-        except:
+        except:  # pylint: disable=bare-except
             log.format_fail(f"Failed to download {url} to {file_path}")
             return

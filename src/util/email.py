@@ -1,6 +1,6 @@
 import typing as T
 
-import yagmail
+import yagmail  # type: ignore
 
 from util import log
 
@@ -12,7 +12,6 @@ class Email(T.TypedDict):
 
 
 def get_email_accounts_from_password(
-    encrypt_password: str,
     encrypted_emails: T.List[T.Dict[str, str]],
     dry_run: bool = False,
 ) -> T.List[Email]:
@@ -74,7 +73,7 @@ def send_email(
                 verbose=verbose,
             )
             return
-        except:
+        except:  # pylint: disable=bare-except
             pass
 
     log.print_fail(f"Failed to send email alert for {' '.join(to_addresses)}")
