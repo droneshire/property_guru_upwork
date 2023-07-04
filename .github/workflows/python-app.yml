@@ -35,7 +35,7 @@ jobs:
         make mypy
     - name: Lint with pylint
       run: |
-        make mypy
+        make pylint
     - name: Test with pytest
       run: |
         make test
