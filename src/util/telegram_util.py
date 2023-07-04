@@ -4,7 +4,6 @@ import telegram
 
 
 class TelegramUtil:
-
     def __init__(self, token: str) -> None:
         self.bot = telegram.Bot(token=token)
 
