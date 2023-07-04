@@ -29,4 +29,6 @@ Under 'Buy' you will see all the different parameters available on the website
 
 If possible please also include a way to mute/pause the alert bot, in such event that my partner and I are not actively searching for any specific listings
 
+## Example API Calls
 
+[Examples](https://github.com/droneshire/property_guru_upwork/blob/main/examples.md)
