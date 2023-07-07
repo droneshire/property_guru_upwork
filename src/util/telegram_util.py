@@ -1,4 +1,5 @@
 import asyncio
+import typing as T
 
 import telegram
 
@@ -13,11 +14,16 @@ class TelegramUtil:
         async with self.bot:
             try:
                 its_me = await self.bot.get_me()
-                log.print_ok_blue(f"Telegram bot is running as {its_me.username}")
+                log.print_ok_arrow(f"Telegram bot is running as {its_me.username}")
                 return True
             except telegram.error.Unauthorized:
                 log.print_fail("Telegram bot token is invalid!")
                 return False
+
+    async def get_chats(self) -> T.List[telegram.Update]:
+        async with self.bot:
+            updates = await self.bot.get_updates()
+            return updates
 
     async def send_message(self, chat_id: str, message: str) -> None:
         async with self.bot:
