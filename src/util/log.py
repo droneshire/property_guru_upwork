@@ -125,7 +125,7 @@ def make_formatter_printer(
 
         if is_color_supported():
             return (
-                str(color + formatted_text + Colors.ENDC)
+                str(color + formatted_text + Colors.ENDC.value)
                 .encode("utf-8")
                 .decode(sys.stdout.encoding, errors="ignore")
             )
