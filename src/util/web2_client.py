@@ -1,5 +1,6 @@
 import typing as T
 
+import cloudscraper
 import requests
 
 from util import log, wait
@@ -11,7 +12,7 @@ class Web2Client:
     def __init__(
         self,
         base_url: str = "",
-        rate_limit_delay: float = 5.0,
+        rate_limit_delay: float = 0.0,
         dry_run: bool = False,
     ) -> None:
         self.dry_run = dry_run
@@ -21,7 +22,7 @@ class Web2Client:
         if dry_run:
             log.print_warn("Web2Client in dry run mode...")
 
-        self.requests = requests
+        self.requests: cloudscraper.CloudScraper = cloudscraper.create_scraper()
 
     def get_request(
         self,
@@ -29,7 +30,7 @@ class Web2Client:
         headers: T.Optional[T.Dict[str, T.Any]] = None,
         params: T.Optional[T.Dict[str, T.Any]] = None,
         timeout: float = 5.0,
-    ) -> T.Any:
+    ) -> T.Optional[requests.Response]:
         if self.rate_limit_delay > 0.0:
             wait.wait(self.rate_limit_delay)
 
@@ -39,53 +40,65 @@ class Web2Client:
         if params is None:
             params = {}
 
+        if self.dry_run:
+            log.print_normal(f"GET {url}")
+            return None
+
         try:
-            return self.requests.request(
-                "GET", url, params=params, headers=headers, timeout=timeout
-            ).json()
+            return self.requests.get(url, params=params, timeout=timeout)
         except KeyboardInterrupt:
             raise
         except:  # pylint: disable=bare-except
-            return {}
+            log.format_fail(f"Failed to get {url}")
+            return None
 
     def post_request(
         self,
         url: str,
-        json_data: T.Optional[T.Dict[str, T.Any]] = None,
+        data: T.Any = None,
         headers: T.Optional[T.Dict[str, T.Any]] = None,
         params: T.Optional[T.Dict[str, T.Any]] = None,
         timeout: float = 5.0,
-        delay: float = 5.0,
-    ) -> T.Any:
-        if self.dry_run:
-            return {}
-
+        delay: float = 0.0,
+    ) -> T.Optional[requests.Response]:
         if headers is None:
             headers = {}
 
         if params is None:
             params = {}
 
-        if json_data is None:
-            json_data = {}
+        if data is None:
+            data = {}
 
         if delay > 0.0:
             wait.wait(delay)
 
+        if self.dry_run:
+            log.print_normal(f"POST {url}")
+            return None
+
         try:
-            return self.requests.request(
-                "POST",
-                url,
-                json=json_data,
-                params=params,
-                headers=headers,
-                timeout=timeout,
-            ).json()
+            if isinstance(data, dict):
+                return self.requests.post(
+                    url,
+                    json=json_data,
+                    params=params,
+                    headers=headers,
+                    timeout=timeout,
+                )
+            else:
+                return self.requests.post(
+                    url,
+                    data=data,
+                    params=params,
+                    headers=headers,
+                    timeout=timeout,
+                )
         except KeyboardInterrupt:
             raise
         except:  # pylint: disable=bare-except
             log.format_fail(f"Failed to post to {url}")
-            return {}
+            return None
 
     def url_download(
         self,
@@ -97,6 +110,7 @@ class Web2Client:
         timeout: float = 5.0,
     ) -> None:
         if self.dry_run:
+            log.print_normal(f"Download {url} to {file_path}")
             return
 
         if headers is None:
@@ -106,8 +120,7 @@ class Web2Client:
             params = {}
 
         try:
-            with self.requests.request(
-                "GET",
+            with self.requests.get(
                 url,
                 data=data,
                 params=params,
