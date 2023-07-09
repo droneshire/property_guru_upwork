@@ -30,7 +30,7 @@ class Web2Client:
         headers: T.Optional[T.Dict[str, T.Any]] = None,
         params: T.Optional[T.Dict[str, T.Any]] = None,
         timeout: float = 5.0,
-    ) -> T.Optional[requests.Response]:
+    ) -> T.Any:
         if self.rate_limit_delay > 0.0:
             wait.wait(self.rate_limit_delay)
 
@@ -60,7 +60,7 @@ class Web2Client:
         params: T.Optional[T.Dict[str, T.Any]] = None,
         timeout: float = 5.0,
         delay: float = 0.0,
-    ) -> T.Optional[requests.Response]:
+    ) -> T.Any:
         if headers is None:
             headers = {}
 
@@ -81,7 +81,7 @@ class Web2Client:
             if isinstance(data, dict):
                 return self.requests.post(
                     url,
-                    json=json_data,
+                    json=data,
                     params=params,
                     headers=headers,
                     timeout=timeout,

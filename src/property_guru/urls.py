@@ -1,11 +1,12 @@
+import typing as T
+
 from property_guru.headers import PROPERTY_GURU_API_HEADERS
-from util.web2_client import Web2Client
 
 
 class ApiCall:
     URL = ""
     DATA = ""
-    HEADERS = None
+    HEADERS: T.Dict[str, T.Any] = {}
 
 
 class CreateSearch(ApiCall):

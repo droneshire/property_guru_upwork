@@ -7,6 +7,7 @@ class SearchParams(T.TypedDict):
     baths: T.List[int]
     beds: T.List[int]
     maxprice: int
+    minprice: int
     maxsize: int
     minsize: int
     newProject: str

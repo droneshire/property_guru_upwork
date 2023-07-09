@@ -12,7 +12,7 @@ init:
 install:
 	pip3 install -r requirements.txt
 
-format:
+format: isort
 	$(BLACK_CMD)
 
 check_format:
