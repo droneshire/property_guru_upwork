@@ -4,7 +4,6 @@ import os
 import dotenv
 
 from bot import ScraperBot
-from property_guru.data_types import SearchParams
 from util import log, telegram_util, wait
 
 
@@ -62,7 +61,7 @@ def setup_telegram(dry_run: bool) -> telegram_util.TelegramUtil:
     is_valid = telegram.check_token()
 
     if not is_valid:
-        raise Exception("Telegram token is invalid!")
+        raise Exception("Telegram token is invalid!")  # pylint: disable=broad-exception-raised
 
     chat_id = telegram.get_chat_id(telegram_channel_name)
 
@@ -70,7 +69,7 @@ def setup_telegram(dry_run: bool) -> telegram_util.TelegramUtil:
         log.print_bold(f"Telegram channel id: {chat_id}")
     else:
         log.print_fail(f"Telegram channel {telegram_channel_name} not found!")
-        raise Exception("Telegram channel not found!")
+        raise Exception("Telegram channel not found!")  # pylint: disable=broad-exception-raised
 
     return telegram
 

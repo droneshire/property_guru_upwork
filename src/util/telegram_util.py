@@ -7,13 +7,13 @@ import telegram
 from util import log
 
 
-def force_sync(fn: T.Callable) -> T.Callable:
-    @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-        res = fn(*args, **kwargs)
-        if asyncio.iscoroutine(res):
-            return asyncio.get_event_loop().run_until_complete(res)
-        return res
+def force_sync(function_handle: T.Callable) -> T.Callable:
+    @functools.wraps(function_handle)
+    def wrapper(*args: T.Any, **kwargs: T.Any) -> T.Any:
+        response = function_handle(*args, **kwargs)
+        if asyncio.iscoroutine(response):
+            return asyncio.get_event_loop().run_until_complete(response)
+        return response
 
     return wrapper
 
@@ -28,7 +28,7 @@ class TelegramUtil:
             log.print_normal("TelegramUtil: check_token (dry run)")
             return True
 
-        return self._check_token()
+        return self._check_token()  # type: ignore[no-any-return]
 
     @force_sync
     async def _check_token(self) -> bool:
@@ -40,13 +40,14 @@ class TelegramUtil:
             except:  # pylint: disable=bare-except
                 log.print_fail("Telegram bot token is invalid!")
                 return False
+        return False
 
     def get_channel_chats(self) -> T.List[telegram.Chat]:
         if self.dry_run:
             log.print_normal("TelegramUtil: get_channel_chats (dry run)")
             return []
 
-        return self._get_channel_chats()
+        return self._get_channel_chats()  # type: ignore[no-any-return]
 
     @force_sync
     async def _get_channel_chats(self) -> T.List[telegram.Chat]:
@@ -58,7 +59,7 @@ class TelegramUtil:
                 chats.append(update.channel_post.chat)
         return chats
 
-    def get_chat_id(self, title: str) -> T.Optional[str]:
+    def get_chat_id(self, title: str) -> T.Optional[int]:
         if self.dry_run:
             log.print_normal("TelegramUtil: get_chat_id (dry run)")
             return None
@@ -73,7 +74,7 @@ class TelegramUtil:
         if self.dry_run:
             log.print_normal("TelegramUtil: send_message (dry run)")
             return
-        return self._send_message(chat_id, message)
+        self._send_message(chat_id, message)  # type: ignore[no-any-return]
 
     @force_sync
     async def _send_message(self, chat_id: str, message: str) -> None:

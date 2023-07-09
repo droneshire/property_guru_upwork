@@ -1,7 +1,6 @@
 import typing as T
 
 import cloudscraper
-import requests
 
 from util import log, wait
 
@@ -86,14 +85,13 @@ class Web2Client:
                     headers=headers,
                     timeout=timeout,
                 )
-            else:
-                return self.requests.post(
-                    url,
-                    data=data,
-                    params=params,
-                    headers=headers,
-                    timeout=timeout,
-                )
+            return self.requests.post(
+                url,
+                data=data,
+                params=params,
+                headers=headers,
+                timeout=timeout,
+            )
         except KeyboardInterrupt:
             raise
         except:  # pylint: disable=bare-except

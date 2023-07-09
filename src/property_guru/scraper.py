@@ -1,5 +1,4 @@
 import json
-import typing as T
 
 from bs4 import BeautifulSoup
 
@@ -20,6 +19,7 @@ class PropertyGuru:
             url=url,
             data=data,
         )
+        print(response)
 
     def check_properties(self, parameters: SearchParams) -> None:
         if not parameters:
@@ -28,6 +28,6 @@ class PropertyGuru:
 
         response = self.web2.get_request(
             url=PropertyForSale.URL,
-            params=parameters,
+            params=dict(parameters),
         )
         print(response)

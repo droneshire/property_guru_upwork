@@ -12,6 +12,7 @@ class ApiCall:
 class CreateSearch(ApiCall):
     URL = "https://www.propertyguru.com.sg/sf2-search/ajax/save-search/create"
     HEADERS = PROPERTY_GURU_API_HEADERS
+    # pylint: disable=line-too-long
     DATA = """------WebKitFormBoundaryjr3TeItenploVwLDContent-Disposition: form-data; name="additionalParams"
 
 {{}}

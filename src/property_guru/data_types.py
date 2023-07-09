@@ -12,3 +12,17 @@ class SearchParams(T.TypedDict):
     minsize: int
     newProject: str
     search: bool
+
+
+SEARCH_PARAMS_DEFAULT: SearchParams = {
+    "listing_type": "sale",
+    "market": "residential",
+    "baths": [1, 2, 3, 4, 5],
+    "beds": [1, 2, 3, 4, 5],
+    "maxprice": 3000000,
+    "minprice": 0,
+    "maxsize": 6000,
+    "minsize": 0,
+    "newProject": "all",
+    "search": True,
+}
