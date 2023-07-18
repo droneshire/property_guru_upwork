@@ -44,19 +44,22 @@ class ScraperBot:
         self.check_and_update_params()
 
     def check_and_update_params(self) -> None:
-        self._try_to_load_params_from_file()
+        if self._try_to_load_params_from_file():
+            return
+
         self._try_to_update_params_from_firebase()
 
     def run(self) -> None:
         self.firebase_user.health_ping()
         self._check_firebase()
+
         for user, params in self.params.items():
             log.print_ok_blue(f"Checking properties for {user}...")
             self.scraper.check_properties(params)
 
-    def _try_to_load_params_from_file(self) -> None:
+    def _try_to_load_params_from_file(self) -> bool:
         if not os.path.exists(self.params_file):
-            return
+            return False
 
         with open(self.params_file, "r", encoding="utf-8") as infile:
             data = json.load(infile)
@@ -70,11 +73,13 @@ class ScraperBot:
 
         if not is_valid_data:
             log.print_fail("Invalid data in params.json!")
-        else:
-            self.params["from_file"] = data
-            log.print_normal(f"Updated params:\n{json.dumps(self.params, indent=4)}")
+            return False
 
-    def _try_to_update_params_from_firebase(self) -> None:
+        self.params["from_file"] = data
+        log.print_normal(f"Updated params:\n{json.dumps(self.params, indent=4)}")
+        return True
+
+    def _try_to_update_params_from_firebase(self) -> bool:
         for user, info in self.firebase_user.get_users().items():
             search_params: SearchParams = {
                 "minprice": info["searchParams"]["minPrice"],
@@ -93,7 +98,12 @@ class ScraperBot:
                 "market": "residential",
             }
 
+            log.print_bold(f"Updating params for {user}...")
+            log.print_normal(f"Old params:\n{json.dumps(self.params.get(user, {}), indent=4)}")
+            log.print_bright(f"New params:\n{json.dumps(search_params, indent=4)}")
             self.params[user] = search_params
+
+        return True
 
     def _check_firebase(self) -> None:
         update_from_firebase = False

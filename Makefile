@@ -36,6 +36,6 @@ test:
 	$(RUN_PY) unittest discover -s test -p *_test.py -v
 
 run_bot:
-	$(RUN_PY) executables.property_guru_bot --log-level=INFO
+	$(RUN_PY) executables.property_guru_bot --log-level=INFO --params-file=/tmp/params.json
 
 .PHONY: install format check_format check_types pylint lint test creator_bot account_bot server

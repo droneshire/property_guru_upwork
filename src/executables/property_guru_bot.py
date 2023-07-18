@@ -48,6 +48,12 @@ def parse_args() -> argparse.Namespace:
         help="Time between each parameter update (in seconds)",
         default=60 * 1,
     )
+    parser.add_argument(
+        "--firebase-credentials-file",
+        type=str,
+        help="Firebase credentials file",
+        default=os.path.join(root_dir, "firebase_service_account.json"),
+    )
 
     return parser.parse_args()
 
@@ -77,7 +83,13 @@ def setup_telegram(dry_run: bool) -> telegram_util.TelegramUtil:
 def run_loop(args: argparse.Namespace) -> None:
     telegram = setup_telegram(args.dry_run)
 
-    bot = ScraperBot(telegram, args.params_file, args.param_update_period, args.dry_run)
+    bot = ScraperBot(
+        telegram,
+        args.params_file,
+        args.firebase_credentials_file,
+        args.param_update_period,
+        args.dry_run,
+    )
 
     bot.init()
 
