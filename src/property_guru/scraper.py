@@ -10,17 +10,9 @@ from util.web2_client import Web2Client
 
 
 class PropertyGuru:
-    def __init__(self) -> None:
+    def __init__(self, dry_run: bool = False) -> None:
         self.web2 = Web2Client()
-
-    def update_parameters(self, parameters: SearchParams) -> None:
-        data = CreateSearch.DATA.format(json.dumps(parameters))
-        url = CreateSearch.URL
-        response = self.web2.post_request(
-            url=url,
-            data=data,
-        )
-        print(response)
+        self.dry_run = dry_run
 
     def check_properties(self, parameters: SearchParams) -> None:
         if not parameters:

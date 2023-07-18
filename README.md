@@ -1,8 +1,14 @@
 # PropertyGuru Web Alert System
+
 [![Python application](https://github.com/droneshire/property_guru_upwork/actions/workflows/python-app.yml/badge.svg)](https://github.com/droneshire/property_guru_upwork/actions/workflows/python-app.yml)
 
-
 Web Scraping and Telegram/Email Alert System
+
+## Important Links
+
+[Telegram Python Library](https://docs.python-telegram-bot.org/en/stable/telegram.bot.html#telegram.Bot.send_message)
+[Firebase Console](https://console.firebase.google.com/u/0/project/property-guru-rei-scrape)
+[Hosted Website for Managing Settings](https://property-guru-rei-scrape.web.app/login)
 
 ## Requirements from Customer
 
