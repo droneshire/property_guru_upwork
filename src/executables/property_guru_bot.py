@@ -71,7 +71,7 @@ def setup_telegram(dry_run: bool) -> telegram_util.TelegramUtil:
 
     chat_id = telegram.get_chat_id(telegram_channel_name)
 
-    if chat_id:
+    if chat_id or dry_run:
         log.print_bold(f"Telegram channel id: {chat_id}")
     else:
         log.print_fail(f"Telegram channel {telegram_channel_name} not found!")
