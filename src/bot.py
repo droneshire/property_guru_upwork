@@ -1,10 +1,8 @@
-import copy
 import json
 import os
 import time
 import typing as T
 
-from firebase.data_types import User
 from firebase.user import FirebaseUser
 from property_guru.data_types import SEARCH_PARAMS_DEFAULT, ListingDescription, SearchParams
 from property_guru.scraper import PropertyGuru

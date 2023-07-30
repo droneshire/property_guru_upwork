@@ -1,7 +1,6 @@
 import typing as T
 
-from property_guru.data_types import ListingSearchParams, PropertyListing
-from property_guru.headers import PROPERTY_GURU_API_HEADERS
+from property_guru.data_types import PropertyListing
 
 
 class ApiCall:

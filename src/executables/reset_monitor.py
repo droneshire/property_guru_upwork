@@ -25,24 +25,24 @@ TIME_BETWEEN_CHECKS = 5
 def try_to_kill_process() -> None:
     pidfile = os.environ.get("BOT_PIDFILE", "monitor_inventory.pid")
     try:
-        with open(pidfile, "r") as infile:
+        with open(pidfile, "r", encoding="utf-8") as infile:
             pid = int(infile.read())
             log.print_fail_arrow(f"Killing process with pid {pid}...")
             os.kill(pid, 9)
-    except:
+    except:  # pylint: disable=bare-except
         log.print_normal("No process to kill.")
 
 
 def is_process_killed() -> bool:
     pidfile = os.environ.get("BOT_PIDFILE", "monitor_inventory.pid")
     try:
-        with open(pidfile, "r") as infile:
+        with open(pidfile, "r", encoding="utf-8") as infile:
             pid = int(infile.read())
             if not os.path.exists(f"/proc/{pid}"):
                 log.print_fail(f"Process with pid {pid} is killed.")
                 return True
             return False
-    except:
+    except:  # pylint: disable=bare-except
         log.print_fail("No process running.")
         return True
 
