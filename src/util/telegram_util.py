@@ -70,7 +70,7 @@ class TelegramUtil:
                 return chat.id
         return None
 
-    def send_message(self, chat_id: str, message: str) -> None:
+    def send_message(self, chat_id: int, message: str) -> None:
         if self.dry_run:
             log.print_normal("TelegramUtil: send_message (dry run)")
             return

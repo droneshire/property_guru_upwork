@@ -15,6 +15,7 @@ from google.cloud.firestore_v1.document import DocumentReference
 from google.cloud.firestore_v1.watch import DocumentChange
 
 from firebase import data_types
+from property_guru.data_types import SearchParams
 from util import log
 from util.dict_util import check_dict_keys_recursive, patch_missing_keys_recursive, safe_get
 
@@ -169,6 +170,44 @@ class FirebaseUser:
             {"heartbeat": firestore.SERVER_TIMESTAMP}, merge=True
         )
 
-    def get_users(self) -> T.Dict[str, data_types.User]:
+    def _get_users(self) -> T.Dict[str, data_types.User]:
         with self.db_cache_lock:
             return copy.deepcopy(self.db_cache)
+
+    def get_search_params(self) -> T.Dict[str, SearchParams]:
+        user_search_params = {}
+        with self.db_cache_lock:
+            for user, info in self.db_cache.items():
+                property_id = info["searchParams"]["searchString"].split("-")[-1]
+                if isinstance(property_id, str) and not property_id.isdigit():
+                    log.print_fail(f"Invalid property id {property_id}!")
+                    continue
+
+                search_params: SearchParams = {
+                    "minprice": info["searchParams"]["minPrice"],
+                    "maxprice": info["searchParams"]["maxPrice"],
+                    "beds": list(
+                        range(info["searchParams"]["minBeds"], info["searchParams"]["maxBeds"] + 1)
+                    ),
+                    "baths": list(
+                        range(
+                            info["searchParams"]["minBaths"], info["searchParams"]["maxBaths"] + 1
+                        )
+                    ),
+                    "minsize": info["searchParams"]["minSize"],
+                    "maxsize": info["searchParams"]["maxSize"],
+                    "newProject": "all",
+                    "search": True,
+                    "listing_type": "sale",
+                    "market": "residential",
+                    "property_id": int(property_id),
+                }
+                user_search_params[user] = search_params
+        return user_search_params
+
+    def get_listing_ids(self) -> T.Dict[str, T.List[int]]:
+        user_listing_ids = {}
+        with self.db_cache_lock:
+            for user, info in self.db_cache.items():
+                user_listing_ids[user] = info.get("listingIds", [])
+        return user_listing_ids

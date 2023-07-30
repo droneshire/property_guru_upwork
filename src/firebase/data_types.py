@@ -41,6 +41,7 @@ class SearchParams(T.TypedDict):
 class User(T.TypedDict):
     preferences: Preferences
     searchParams: SearchParams
+    listingIds: T.List[int]
 
 
 NULL_USER = User(
@@ -64,4 +65,5 @@ NULL_USER = User(
         maxSize=10000,
         minSize=0,
     ),
+    listingIds=[],
 )

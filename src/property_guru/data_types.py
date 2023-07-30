@@ -1,5 +1,7 @@
 import typing as T
 
+PROJECT_NAME = "property_guru_bot"
+
 
 class SearchParams(T.TypedDict):
     listing_type: str
@@ -19,8 +21,8 @@ SEARCH_PARAMS_DEFAULT: SearchParams = {
     "listing_type": "sale",
     "market": "residential",
     "baths": [1, 2, 3, 4, 5],
-    "beds": [1, 2, 3, 4, 5],
-    "maxprice": 3000000,
+    "beds": [0, 1, 2, 3, 4, 5],
+    "maxprice": 15000000,
     "minprice": 0,
     "maxsize": 6000,
     "minsize": 0,
@@ -33,8 +35,8 @@ TEST_PARAMS: SearchParams = {
     "listing_type": "sale",
     "market": "residential",
     "baths": [1, 2, 3, 4, 5],
-    "beds": [1, 2, 3, 4, 5],
-    "maxprice": 3000000,
+    "beds": [0, 1, 2, 3, 4, 5],
+    "maxprice": 15000000,
     "minprice": 0,
     "maxsize": 6000,
     "minsize": 0,
@@ -136,4 +138,4 @@ class ListingDescription(T.TypedDict):
     beds: str
     baths: str
     square_footage: str
-    listing_id: str
+    listing_id: int

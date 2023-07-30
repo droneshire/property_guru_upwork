@@ -1,16 +1,18 @@
 import argparse
 import os
+import typing as T
 
 import dotenv
 
 from bot import ScraperBot
+from property_guru.data_types import PROJECT_NAME
 from util import log, telegram_util, wait
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Property Guru Bot")
 
-    log_dir = log.get_logging_dir("property_guru_bot")
+    log_dir = log.get_logging_dir(PROJECT_NAME)
 
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument(
@@ -58,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_telegram(dry_run: bool) -> telegram_util.TelegramUtil:
+def setup_telegram(dry_run: bool) -> T.Tuple[telegram_util.TelegramUtil, str]:
     telegram_api_token = os.environ.get("TELEGRAM_API_TOKEN", "")
     telegram_channel_name = os.environ.get("TELEGRAM_BOT_CHANNEL", "")
 
@@ -77,14 +79,15 @@ def setup_telegram(dry_run: bool) -> telegram_util.TelegramUtil:
         log.print_fail(f"Telegram channel {telegram_channel_name} not found!")
         raise Exception("Telegram channel not found!")  # pylint: disable=broad-exception-raised
 
-    return telegram
+    return telegram, telegram_channel_name
 
 
 def run_loop(args: argparse.Namespace) -> None:
-    telegram = setup_telegram(args.dry_run)
+    telegram, telegram_channel_name = setup_telegram(args.dry_run)
 
     bot = ScraperBot(
         telegram,
+        telegram_channel_name,
         args.params_file,
         args.firebase_credentials_file,
         args.param_update_period,
@@ -102,7 +105,7 @@ def main() -> None:
     args = parse_args()
     dotenv.load_dotenv(".env")
 
-    log.setup_log(args.log_level, args.log_dir, "prop_guru")
+    log.setup_log(args.log_level, args.log_dir, PROJECT_NAME)
     log.print_ok_blue("Starting Property Guru Bot")
 
     bot_pidfile = os.environ.get("BOT_PIDFILE", "monitor_inventory.pid")

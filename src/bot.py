@@ -6,7 +6,7 @@ import typing as T
 
 from firebase.data_types import User
 from firebase.user import FirebaseUser
-from property_guru.data_types import SEARCH_PARAMS_DEFAULT, SearchParams
+from property_guru.data_types import SEARCH_PARAMS_DEFAULT, ListingDescription, SearchParams
 from property_guru.scraper import PropertyGuru
 from util import log
 from util.format import get_pretty_seconds
@@ -15,13 +15,14 @@ from util.telegram_util import TelegramUtil
 
 class ScraperBot:
     TIME_BETWEEN_FIREBASE_QUERIES = {
-        "prod": 60 * 15,
+        "prod": 60 * 30,
         "test": 60,
     }
 
     def __init__(
         self,
         telegram_util: TelegramUtil,
+        telegram_channel_name: str,
         params_file: str,
         credentials_file: str,
         param_update_period: int = 60 * 30,
@@ -29,11 +30,14 @@ class ScraperBot:
         verbose: bool = False,
     ) -> None:
         self.telegram: TelegramUtil = telegram_util
+        self.telegram_channel_name = telegram_channel_name
         self.dry_run = dry_run
-        self.scraper = PropertyGuru(dry_run=dry_run)
+        self.scraper = PropertyGuru(dry_run=dry_run, verbose=verbose)
         self.params_file = params_file
         self.params: T.Dict[str, SearchParams] = {}
         self.param_update_period = param_update_period
+
+        self.listing_ids: T.Dict[str, T.List[int]] = {}
 
         self.firebase_user: FirebaseUser = FirebaseUser(credentials_file, verbose)
         self.last_query_firebase_time: T.Optional[float] = None
@@ -47,7 +51,7 @@ class ScraperBot:
         if self._try_to_load_params_from_file():
             return
 
-        self._try_to_update_params_from_firebase()
+        self._try_to_update_data_from_firebase()
 
     def run(self) -> None:
         self.firebase_user.health_ping()
@@ -55,7 +59,48 @@ class ScraperBot:
 
         for user, params in self.params.items():
             log.print_ok_blue(f"Checking properties for {user}...")
-            self.scraper.check_properties(params)
+            current_listings: T.List[ListingDescription] = self.scraper.get_properties(params)
+
+            if not current_listings:
+                continue
+
+            current_listings_by_id = {
+                int(listing["listing_id"]): listing for listing in current_listings
+            }
+
+            previous_listings = self.listing_ids.get(user, [])
+            new_listing_ids = list(set(current_listings_by_id.keys()) - set(previous_listings))
+
+            if not new_listing_ids:
+                continue
+
+            log.print_ok(f"Found {len(new_listing_ids)} new listings!")
+            self.listing_ids[user] = list(current_listings_by_id.keys())
+            for listing_id in new_listing_ids:
+                listing = current_listings_by_id[listing_id]
+                self._handle_new_listing(user, listing)
+                time.sleep(1)
+
+    def _handle_new_listing(self, user: str, listing: ListingDescription) -> None:
+        log.print_bold(f"New listing found for {user}!")
+        log.print_normal(json.dumps(listing, indent=4))
+        house_emoji = "\U0001f3e0"
+        message = f"{house_emoji * 2} New listing found for {user}!\n"
+        message += f"Listing ID: {listing['listing_id']}\n"
+        message += f"Listing Title: {listing['listing_title']}\n"
+        message += f"Listing URL: {listing['listing_url']}\n"
+        message += f"Listing Address: {listing['listing_address']}\n"
+        message += f"Price: {listing['price']}\n"
+        message += f"Beds: {listing['beds']}\n"
+        message += f"Baths: {listing['baths']}\n"
+        message += f"Square Footage: {listing['square_footage']}\n"
+
+        channel_id = self.telegram.get_chat_id(self.telegram_channel_name)
+        if not channel_id:
+            log.print_fail(f"Telegram channel {self.telegram_channel_name} not found!")
+            return
+
+        self.telegram.send_message(channel_id, message)
 
     def _try_to_load_params_from_file(self) -> bool:
         if not os.path.exists(self.params_file):
@@ -79,37 +124,18 @@ class ScraperBot:
         log.print_normal(f"Updated params:\n{json.dumps(self.params, indent=4)}")
         return True
 
-    def _try_to_update_params_from_firebase(self) -> bool:
-        for user, info in self.firebase_user.get_users().items():
-            property_id = info["searchParams"]["searchString"].split("-")[-1]
-            if isinstance(property_id, str) and not property_id.isdigit():
-                log.print_fail(f"Invalid property id {property_id}!")
-                continue
-
-            search_params: SearchParams = {
-                "minprice": info["searchParams"]["minPrice"],
-                "maxprice": info["searchParams"]["maxPrice"],
-                "beds": list(
-                    range(info["searchParams"]["minBeds"], info["searchParams"]["maxBeds"] + 1)
-                ),
-                "baths": list(
-                    range(info["searchParams"]["minBaths"], info["searchParams"]["maxBaths"] + 1)
-                ),
-                "minsize": info["searchParams"]["minSize"],
-                "maxsize": info["searchParams"]["maxSize"],
-                "newProject": "all",
-                "search": True,
-                "listing_type": "sale",
-                "market": "residential",
-                "property_id": int(property_id),
-            }
-
-            log.print_bold(f"Updating params for {user}...")
+    def _try_to_update_data_from_firebase(self) -> None:
+        for user, info in self.firebase_user.get_search_params().items():
+            log.print_bold(f"Getting params for {user} from firebase...")
             log.print_normal(f"Old params:\n{json.dumps(self.params.get(user, {}), indent=4)}")
-            log.print_bright(f"New params:\n{json.dumps(search_params, indent=4)}")
-            self.params[user] = search_params
+            log.print_bright(f"New params:\n{json.dumps(info, indent=4)}")
+            self.params[user] = info
 
-        return True
+        for user, ids in self.firebase_user.get_listing_ids().items():
+            log.print_bold(f"Getting listing ids for {user} from firebase...")
+            log.print_normal(f"Old listing ids:\n{self.listing_ids.get(user, [])}")
+            log.print_bright(f"New listing ids:\n{ids}")
+            self.listing_ids[user] = ids
 
     def _check_firebase(self) -> None:
         update_from_firebase = False
@@ -133,4 +159,4 @@ class ScraperBot:
             )
 
         self.firebase_user.check_and_maybe_handle_firebase_db_updates()
-        self._try_to_update_params_from_firebase()
+        self._try_to_update_data_from_firebase()
