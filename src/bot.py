@@ -81,6 +81,11 @@ class ScraperBot:
 
     def _try_to_update_params_from_firebase(self) -> bool:
         for user, info in self.firebase_user.get_users().items():
+            property_id = info["searchParams"]["searchString"].split("-")[-1]
+            if isinstance(property_id, str) and not property_id.isdigit():
+                log.print_fail(f"Invalid property id {property_id}!")
+                continue
+
             search_params: SearchParams = {
                 "minprice": info["searchParams"]["minPrice"],
                 "maxprice": info["searchParams"]["maxPrice"],
@@ -96,6 +101,7 @@ class ScraperBot:
                 "search": True,
                 "listing_type": "sale",
                 "market": "residential",
+                "property_id": property_id,
             }
 
             log.print_bold(f"Updating params for {user}...")
@@ -127,3 +133,4 @@ class ScraperBot:
             )
 
         self.firebase_user.check_and_maybe_handle_firebase_db_updates()
+        self._try_to_update_params_from_firebase()

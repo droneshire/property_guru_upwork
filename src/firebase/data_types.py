@@ -55,13 +55,13 @@ NULL_USER = User(
     ),
     searchParams=SearchParams(
         searchString="",
-        minBaths=0,
+        minBaths=1,
         maxBaths=5,
-        minBeds=0,
+        minBeds=1,
         maxBeds=5,
         maxPrice=10000000,
-        minPrice=100000,
-        maxSize=6000,
+        minPrice=0,
+        maxSize=10000,
         minSize=0,
     ),
 )
