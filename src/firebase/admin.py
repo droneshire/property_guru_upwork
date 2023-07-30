@@ -1,4 +1,3 @@
-import json
 import time
 import typing as T
 
@@ -19,12 +18,12 @@ class FirebaseAdmin:
         self._is_reset = False
         self.time_between_watcher_update: T.Optional[float] = None
 
-        if not firebase_admin._apps:
+        if not firebase_admin._apps:  # pylint: disable=protected-access
             auth = credentials.Certificate(credentials_file)
             firebase_admin.initialize_app(auth)
 
-        self.db = firestore.client()
-        self.admin_ref: CollectionReference = self.db.collection("admin")
+        self.database = firestore.client()
+        self.admin_ref: CollectionReference = self.database.collection("admin")
         self.admin_watcher = self.admin_ref.on_snapshot(self._collection_snapshot_handler)
 
     def set_reset(self, reset: bool = False) -> None:
@@ -47,7 +46,7 @@ class FirebaseAdmin:
 
         self.time_between_watcher_update = now
 
-        log.print_ok(f"\nUpdating watcher...")
+        log.print_ok("\nUpdating watcher...")
         if self.admin_watcher:
             self.admin_watcher.unsubscribe()
 
@@ -67,6 +66,7 @@ class FirebaseAdmin:
         changed_docs: T.List[DocumentChange],
         read_time: T.Any,
     ) -> None:
+        # pylint: disable=unused-argument
         if len(collection_snapshot) == 0:
             return
         collection_dict = collection_snapshot[0].to_dict()

@@ -9,8 +9,6 @@ import argparse
 import os
 import subprocess
 import sys
-import time
-import typing as T
 
 import dotenv
 
@@ -72,7 +70,7 @@ def main() -> None:
 
     pidfile = os.environ.get("RESET_PIDFILE", "reset_server.pid")
 
-    with open(pidfile, "w") as outfile:
+    with open(pidfile, "w", encoding="utf-8") as outfile:
         outfile.write(str(os.getpid()))
 
     credentials_file = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")

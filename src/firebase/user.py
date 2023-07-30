@@ -1,5 +1,4 @@
 import copy
-import datetime
 import enum
 import json
 import threading
@@ -11,7 +10,6 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from google.cloud.firestore_v1.base_document import DocumentSnapshot
 from google.cloud.firestore_v1.collection import CollectionReference
-from google.cloud.firestore_v1.document import DocumentReference
 from google.cloud.firestore_v1.watch import DocumentChange
 
 from firebase import data_types
@@ -31,28 +29,28 @@ class FirebaseUser:
     HEALTH_PING_TIME = 60 * 30
 
     def __init__(self, credentials_file: str, verbose: bool = False) -> None:
-        if not firebase_admin._apps:
+        if not firebase_admin._apps:  # pylint: disable=protected-access
             auth = credentials.Certificate(credentials_file)
             firebase_admin.initialize_app(auth)
-        self.db = firestore.client()
+        self.database = firestore.client()
         self.verbose = verbose
 
-        self.user_ref: CollectionReference = self.db.collection("user")
-        self.admin_ref: CollectionReference = self.db.collection("admin")
+        self.user_ref: CollectionReference = self.database.collection("user")
+        self.admin_ref: CollectionReference = self.database.collection("admin")
 
         self.users_watcher = self.user_ref.on_snapshot(self._collection_snapshot_handler)
 
-        self.db_cache: T.Dict[str, data_types.User] = {}
+        self.database_cache: T.Dict[str, data_types.User] = {}
 
         self.callback_done: threading.Event = threading.Event()
-        self.db_cache_lock: threading.Lock = threading.Lock()
+        self.database_cache_lock: threading.Lock = threading.Lock()
 
         self.last_health_ping: T.Optional[float] = None
 
     def _delete_user(self, name: str) -> None:
-        with self.db_cache_lock:
-            if name in self.db_cache:
-                del self.db_cache[name]
+        with self.database_cache_lock:
+            if name in self.database_cache:
+                del self.database_cache[name]
         log.print_warn(f"Deleting user {name} from cache")
 
     def _collection_snapshot_handler(
@@ -61,29 +59,32 @@ class FirebaseUser:
         changed_docs: T.List[DocumentChange],
         read_time: T.Any,
     ) -> None:
+        # pylint: disable=unused-argument
         log.print_warn(f"Received collection snapshot for {len(collection_snapshot)} documents")
 
-        users = self.db_cache.keys()
-        with self.db_cache_lock:
-            self.db_cache = {}
+        users = self.database_cache.keys()
+        with self.database_cache_lock:
+            self.database_cache = {}
             for doc in collection_snapshot:
                 doc_dict = doc.to_dict()
                 if not doc_dict:
                     continue
-                self.db_cache[doc.id] = doc_dict  # type: ignore
+                self.database_cache[doc.id] = doc_dict  # type: ignore
                 log.print_normal(f"{json.dumps(doc_dict, indent=4, sort_keys=True)}")
 
         for user in users:
-            if user not in self.db_cache:
+            if user not in self.database_cache:
                 self._delete_user(user)
 
         for change in changed_docs:
             doc_id = change.document.id
-            email = safe_get(
-                dict(self.db_cache[doc_id]), "preferences.notifications.email.email".split("."), ""
+            safe_get(
+                dict(self.database_cache[doc_id]),
+                "preferences.notifications.email.email".split("."),
+                "",
             )
             phone_number = safe_get(
-                dict(self.db_cache[doc_id]),
+                dict(self.database_cache[doc_id]),
                 "preferences.notifications.sms.phoneNumber".split("."),
                 "",
             )
@@ -107,7 +108,8 @@ class FirebaseUser:
         if not db_user:
             db_user = copy.deepcopy(data_types.NULL_USER)
             log.print_normal(
-                f"Initializing new user {user} in database:\n{json.dumps(db_user, indent=4, sort_keys=True)}"
+                f"Initializing new user {user} in database:\n"
+                f"{json.dumps(db_user, indent=4, sort_keys=True)}"
             )
         missing_keys = check_dict_keys_recursive(dict(data_types.NULL_USER), dict(db_user))
         if missing_keys:
@@ -127,7 +129,7 @@ class FirebaseUser:
         )
 
     def update_watchers(self) -> None:
-        log.print_warn(f"Updating watcher...")
+        log.print_warn("Updating watcher...")
         if self.users_watcher:
             self.users_watcher.unsubscribe()
 
@@ -139,15 +141,15 @@ class FirebaseUser:
         that we are not missing any updates from the database. This is a fallback
         mechanism in case the watcher fails, which it seems to periodically do.
         """
-        log.print_warn(f"Updating from firebase database instead of cache")
-        users = self.db_cache.keys()
-        with self.db_cache_lock:
-            self.db_cache = {}
+        log.print_warn("Updating from firebase database instead of cache")
+        users = self.database_cache.keys()
+        with self.database_cache_lock:
+            self.database_cache = {}
             for doc in self.user_ref.list_documents():
-                self.db_cache[doc.id] = doc.get().to_dict()
+                self.database_cache[doc.id] = doc.get().to_dict()
 
         for user in users:
-            if user not in self.db_cache:
+            if user not in self.database_cache:
                 self._delete_user(user)
 
         self.callback_done.set()
@@ -156,7 +158,7 @@ class FirebaseUser:
         if self.callback_done.is_set():
             self.callback_done.clear()
             log.print_bright("Handling firebase database updates")
-            for user, info in self.db_cache.items():
+            for user, info in self.database_cache.items():
                 self._handle_firebase_update(user, info)
 
     def health_ping(self) -> None:
@@ -166,18 +168,19 @@ class FirebaseUser:
         self.last_health_ping = time.time()
 
         log.print_ok_arrow("Health ping")
+        # pylint: disable=no-member
         self.admin_ref.document("health_monitor").set(
             {"heartbeat": firestore.SERVER_TIMESTAMP}, merge=True
         )
 
     def _get_users(self) -> T.Dict[str, data_types.User]:
-        with self.db_cache_lock:
-            return copy.deepcopy(self.db_cache)
+        with self.database_cache_lock:
+            return copy.deepcopy(self.database_cache)
 
     def get_search_params(self) -> T.Dict[str, SearchParams]:
         user_search_params = {}
-        with self.db_cache_lock:
-            for user, info in self.db_cache.items():
+        with self.database_cache_lock:
+            for user, info in self.database_cache.items():
                 property_id = info["searchParams"]["searchString"].split("-")[-1]
                 if isinstance(property_id, str) and not property_id.isdigit():
                     log.print_fail(f"Invalid property id {property_id}!")
@@ -207,7 +210,7 @@ class FirebaseUser:
 
     def get_listing_ids(self) -> T.Dict[str, T.List[int]]:
         user_listing_ids = {}
-        with self.db_cache_lock:
-            for user, info in self.db_cache.items():
+        with self.database_cache_lock:
+            for user, info in self.database_cache.items():
                 user_listing_ids[user] = info.get("listingIds", [])
         return user_listing_ids

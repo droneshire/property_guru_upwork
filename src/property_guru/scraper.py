@@ -7,8 +7,7 @@ import typing as T
 import urllib
 
 from bs4 import BeautifulSoup
-from bs4.element import NavigableString, PageElement, Tag
-from lxml import etree
+from bs4.element import Tag
 
 from property_guru.data_types import PROJECT_NAME, TEST_PARAMS, ListingDescription, SearchParams
 from property_guru.urls import PropertyForSale
@@ -39,11 +38,12 @@ class PropertyGuru:
         log.print_normal(f"Equivalent search:\n{browser_url}")
 
         store_response_html = os.path.join(
-            log.get_logging_dir(PROJECT_NAME), f"{PropertyForSale.URL.split('/')[-1]}.html"
+            log.get_logging_dir(PROJECT_NAME),
+            f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}.html",
         )
 
         if self.USE_TEST_HTML and os.path.isfile(store_response_html):
-            with open(store_response_html, "r") as infile:
+            with open(store_response_html, "r", encoding="utf-8") as infile:
                 content = infile.read()
         else:
             response = self.web2.get_request(
@@ -55,7 +55,7 @@ class PropertyGuru:
                 log.print_fail("Failed to get response!")
                 return []
 
-            with open(store_response_html, "w") as outfile:
+            with open(store_response_html, "w", encoding="utf-8") as outfile:
                 outfile.write(response.content.decode("utf-8"))
             content = response.content
 
@@ -147,7 +147,7 @@ class PropertyGuru:
         pagination_element = soup.find("ul", class_="pagination")
 
         if not pagination_element:
-            log.print_bright(f"Found 1 page to scrape...")
+            log.print_bright("Found 1 page to scrape...")
             return 1
 
         links = pagination_element.find_all("a", href=True)  # type: ignore
@@ -162,6 +162,7 @@ class PropertyGuru:
         return max_page
 
     def _parse_listing_description(self, description_element: Tag) -> ListingDescription:
+        # pylint: disable=too-many-locals
         listing_title_element = description_element.find("h3", class_="ellipsis")
         listing_title = listing_title_element.text.strip()  # type: ignore
         listing_url = listing_title_element.a["href"]  # type: ignore
