@@ -79,6 +79,8 @@ class ScraperBot:
                 self._handle_new_listing(user, listing)
                 time.sleep(1)
 
+        self._try_to_update_data_to_firebase()
+
     def _handle_new_listing(self, user: str, listing: ListingDescription) -> None:
         log.print_bold(f"New listing found for {user}!")
         log.print_normal(json.dumps(listing, indent=4))
@@ -121,6 +123,11 @@ class ScraperBot:
         self.params["from_file"] = data
         log.print_normal(f"Updated params:\n{json.dumps(self.params, indent=4)}")
         return True
+
+    def _try_to_update_data_to_firebase(self) -> None:
+        for user, ids in self.listing_ids.items():
+            log.print_bold(f"Updating listing ids for {user} to firebase...")
+            self.firebase_user.update_listing_ids(user, ids)
 
     def _try_to_update_data_from_firebase(self) -> None:
         for user, info in self.firebase_user.get_search_params().items():

@@ -214,3 +214,13 @@ class FirebaseUser:
             for user, info in self.database_cache.items():
                 user_listing_ids[user] = info.get("listingIds", [])
         return user_listing_ids
+
+    def update_listing_ids(self, user: str, listing_ids: T.List[int]) -> None:
+        if user not in self.database_cache:
+            return
+
+        with self.database_cache_lock:
+            self.database_cache[user]["listingIds"] = listing_ids
+
+        user_dict_firestore = json.loads(json.dumps(self.database_cache[user]))
+        self.user_ref.document(user).set(user_dict_firestore)

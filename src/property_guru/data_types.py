@@ -1,6 +1,7 @@
 import typing as T
 
 PROJECT_NAME = "property_guru_bot"
+INVALID_LISTING_ID = -1
 
 
 class SearchParams(T.TypedDict):

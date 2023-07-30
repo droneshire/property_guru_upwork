@@ -9,7 +9,13 @@ import urllib
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from property_guru.data_types import PROJECT_NAME, TEST_PARAMS, ListingDescription, SearchParams
+from property_guru.data_types import (
+    INVALID_LISTING_ID,
+    PROJECT_NAME,
+    TEST_PARAMS,
+    ListingDescription,
+    SearchParams,
+)
 from property_guru.urls import PropertyForSale
 from util import log
 from util.web2_client import Web2Client
@@ -194,7 +200,16 @@ class PropertyGuru:
         if listing_url.endswith("/"):
             listing_url = listing_url[:-1]
 
-        listing_id = int(listing_url.split("/")[-1].split("-")[-1])
+        if "?" in listing_url:
+            listing_url = listing_url.split("?")[0]
+
+        listing_id = listing_url.split("/")[-1].split("-")[-1]
+
+        if listing_id.isdigit():
+            listing_id = int(listing_id)
+        else:
+            log.print_warn(f"Invalid listing id {listing_id}!")
+            listing_id = INVALID_LISTING_ID
 
         return ListingDescription(
             {
