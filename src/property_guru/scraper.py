@@ -9,7 +9,7 @@ import urllib
 from bs4 import BeautifulSoup
 from lxml import etree
 
-from property_guru.data_types import ListingDescription, SearchParams, TEST_PARAMS
+from property_guru.data_types import TEST_PARAMS, ListingDescription, SearchParams
 from property_guru.urls import PropertyForSale
 from util import log
 from util.web2_client import Web2Client
