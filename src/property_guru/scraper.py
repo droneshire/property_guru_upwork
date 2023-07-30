@@ -7,6 +7,7 @@ import typing as T
 import urllib
 
 from bs4 import BeautifulSoup
+from bs4.element import NavigableString, PageElement, Tag
 from lxml import etree
 
 from property_guru.data_types import TEST_PARAMS, ListingDescription, SearchParams
@@ -22,7 +23,7 @@ class PropertyGuru:
         self.web2 = Web2Client(dry_run=dry_run)
         self.dry_run = dry_run
 
-    def _get_xpath(self, element: BeautifulSoup) -> str:
+    def _get_xpath(self, element: T.Any) -> str:
         xpath = ""
         for parent in element.parents:
             if parent.name:
@@ -99,7 +100,7 @@ class PropertyGuru:
 
             properties.extend(self.get_property_info_from_page(soup))
 
-    def get_property_info_from_page(self, soup: BeautifulSoup) -> T.List[T.Dict[str, str]]:
+    def get_property_info_from_page(self, soup: Tag) -> T.List[ListingDescription]:
         listings_elements = soup.find_all("div", class_="col-xs-12 col-sm-7 listing-description")
         listings_elements.extend(
             soup.find_all("div", class_="col-xs-12 col-sm-12 listing-description")
@@ -113,7 +114,7 @@ class PropertyGuru:
 
         return properties
 
-    def get_total_pages(self, soup: BeautifulSoup) -> int:
+    def get_total_pages(self, soup: Tag) -> int:
         pagination_element = soup.find("ul", class_="pagination")
 
         if not pagination_element:
@@ -131,7 +132,7 @@ class PropertyGuru:
 
         return max_page
 
-    def parse_listing_description(self, description_element: BeautifulSoup) -> ListingDescription:
+    def parse_listing_description(self, description_element: Tag) -> ListingDescription:
         listing_title_element = description_element.find("h3", class_="ellipsis")
         listing_title = listing_title_element.text.strip()
         listing_url = listing_title_element.a["href"]
@@ -157,6 +158,12 @@ class PropertyGuru:
         square_footage = square_footage_element.text.strip()
 
         # Extract listing ID (from the URL)
+        if isinstance(listing_url, list):
+            listing_url = "/".join(listing_url)
+
+        if listing_url.endswith("/"):
+            listing_url = listing_url[:-1]
+
         listing_id = listing_url.split("/")[-1].split("-")[-1]
 
         return ListingDescription(

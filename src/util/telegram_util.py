@@ -80,6 +80,3 @@ class TelegramUtil:
     async def _send_message(self, chat_id: str, message: str) -> None:
         async with self.bot:
             await self.bot.send_message(chat_id=chat_id, text=message)
-
-    def command_handler(self, command: str) -> T.Callable:
-        telegram.ext.filters.COMMAND

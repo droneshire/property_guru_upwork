@@ -101,7 +101,7 @@ class ScraperBot:
                 "search": True,
                 "listing_type": "sale",
                 "market": "residential",
-                "property_id": property_id,
+                "property_id": int(property_id),
             }
 
             log.print_bold(f"Updating params for {user}...")
