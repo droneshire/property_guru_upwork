@@ -29,6 +29,20 @@ SEARCH_PARAMS_DEFAULT: SearchParams = {
     "property_id": 0,
 }
 
+TEST_PARAMS: SearchParams = {
+    "listing_type": "sale",
+    "market": "residential",
+    "baths": [1, 2, 3, 4, 5],
+    "beds": [1, 2, 3, 4, 5],
+    "maxprice": 3000000,
+    "minprice": 0,
+    "maxsize": 6000,
+    "minsize": 0,
+    "newProject": "all",
+    "search": True,
+    "property_id": 71,
+}
+
 
 class ListingSearchParams(T.TypedDict):
     projectUrl: str
@@ -112,3 +126,14 @@ class PropertyListing(T.TypedDict):
     metadata: dict
     context: PropertyContext
     shouldRenderRooms: bool
+
+
+class ListingDescription(T.TypedDict):
+    listing_title: str
+    listing_url: str
+    listing_address: str
+    price: str
+    beds: str
+    baths: str
+    square_footage: str
+    listing_id: str
