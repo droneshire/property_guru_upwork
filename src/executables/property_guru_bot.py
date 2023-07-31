@@ -1,5 +1,6 @@
 import argparse
 import os
+import random
 import typing as T
 
 import dotenv
@@ -32,7 +33,7 @@ def parse_args() -> argparse.Namespace:
         "--time-between-loops",
         type=int,
         help="Time between each loop (in seconds)",
-        default=60,
+        default=random.randint(60 * 5, 60 * 10),
     )
 
     src_dir = os.path.dirname(os.path.dirname(__file__))

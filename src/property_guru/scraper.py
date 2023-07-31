@@ -52,6 +52,7 @@ class PropertyGuru:
             with open(store_response_html, "r", encoding="utf-8") as infile:
                 content = infile.read()
         else:
+            log.print_normal(f"Search Params:\n{json.dumps(parameters, indent=4)}")
             response = self.web2.get_request(
                 url=PropertyForSale.URL,
                 params=dict(parameters),

@@ -60,6 +60,7 @@ class ScraperBot:
             current_listings: T.List[ListingDescription] = self.scraper.get_properties(params)
 
             if not current_listings:
+                self.listing_ids[user] = []
                 continue
 
             current_listings_by_id = {

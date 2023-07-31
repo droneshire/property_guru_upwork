@@ -219,6 +219,9 @@ class FirebaseUser:
         if user not in self.database_cache:
             return
 
+        if self.database_cache[user]["listingIds"] == listing_ids:
+            return
+
         with self.database_cache_lock:
             self.database_cache[user]["listingIds"] = listing_ids
 
