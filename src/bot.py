@@ -63,8 +63,8 @@ class ScraperBot:
             try:
                 current_listings: T.List[ListingDescription] = self.scraper.get_properties(params)
             except ValueError:
-                log.print_fail("Failed to get properties! Throttling...")
                 self.throttling_time = self.throttling_time * 2 + 1
+                log.print_fail(f"Failed to get properties! Throttling {self.throttling_time}s...")
                 wait(self.throttling_time)
                 continue
 
