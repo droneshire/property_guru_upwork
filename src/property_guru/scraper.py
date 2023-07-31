@@ -2,7 +2,6 @@ import copy
 import json
 import os
 import random
-import time
 import typing as T
 import urllib
 
@@ -18,6 +17,7 @@ from property_guru.data_types import (
 )
 from property_guru.urls import PropertyForSale
 from util import log
+from util.wait import wait
 from util.web2_client import Web2Client
 
 
@@ -45,7 +45,7 @@ class PropertyGuru:
 
         store_response_html = os.path.join(
             log.get_logging_dir(PROJECT_NAME),
-            f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}.html",
+            f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}-{browser_url_params}-page-1.html",
         )
 
         if self.USE_TEST_HTML and os.path.isfile(store_response_html):
@@ -60,7 +60,7 @@ class PropertyGuru:
 
             if not response:
                 log.print_fail("Failed to get response!")
-                return []
+                raise ValueError("Failed to get response!")
 
             with open(store_response_html, "w", encoding="utf-8") as outfile:
                 outfile.write(response.content.decode("utf-8"))
@@ -103,14 +103,14 @@ class PropertyGuru:
     def _get_property_from_page(
         self, page: int, parameters: SearchParams, browser_url_params: str
     ) -> T.List[ListingDescription]:
-        log.print_ok_blue(f"Checking page {page}...")
-
         if page == 1:
             return []
 
         url = PropertyForSale.URL + f"/{page}"
 
-        time.sleep(random.randint(20, 60))
+        wait(random.randint(20, 60))
+
+        log.print_ok_blue(f"Checking page {page}...")
 
         browser_url = f"{url}?{browser_url_params}"
         log.print_normal(f"Equivalent search:\n{browser_url}")
@@ -121,8 +121,18 @@ class PropertyGuru:
         )
 
         if not response:
-            log.print_fail("Failed to get response on page {page}!")
+            log.print_fail(f"Failed to get response on page {page}!")
             return []
+
+        store_response_html = os.path.join(
+            log.get_logging_dir(PROJECT_NAME),
+            (
+                f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}-"
+                f"{browser_url_params}-page-{page}.html"
+            ),
+        )
+        with open(store_response_html, "w", encoding="utf-8") as outfile:
+            outfile.write(response.content.decode("utf-8"))
 
         soup = BeautifulSoup(response.content, "html.parser")
 

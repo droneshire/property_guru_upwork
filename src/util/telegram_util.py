@@ -64,7 +64,11 @@ class TelegramUtil:
             log.print_normal("TelegramUtil: get_chat_id (dry run)")
             return None
 
-        chats: T.List[telegram.Chat] = self.get_channel_chats()
+        try:
+            chats: T.List[telegram.Chat] = self.get_channel_chats()
+        except:  # pylint: disable=bare-except
+            log.print_fail("TelegramUtil: get_chat_id: failed to get channel chats")
+            return None
         for chat in chats:
             if chat.title == title:
                 return chat.id

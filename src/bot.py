@@ -9,6 +9,7 @@ from property_guru.scraper import PropertyGuru
 from util import log
 from util.format import get_pretty_seconds
 from util.telegram_util import TelegramUtil
+from util.wait import wait
 
 
 class ScraperBot:
@@ -42,6 +43,8 @@ class ScraperBot:
 
         self.mode = "prod" if not dry_run else "test"
 
+        self.throttling_time = 0.0
+
     def init(self) -> None:
         self.check_and_update_params()
 
@@ -57,7 +60,13 @@ class ScraperBot:
 
         for user, params in self.params.items():
             log.print_ok_blue(f"Checking properties for {user}...")
-            current_listings: T.List[ListingDescription] = self.scraper.get_properties(params)
+            try:
+                current_listings: T.List[ListingDescription] = self.scraper.get_properties(params)
+            except ValueError:
+                log.print_fail("Failed to get properties! Throttling...")
+                self.throttling_time = self.throttling_time * 2 + 1
+                wait(self.throttling_time)
+                continue
 
             if not current_listings:
                 self.listing_ids[user] = []
