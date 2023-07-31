@@ -7,8 +7,8 @@ INVALID_LISTING_ID = -1
 class SearchParams(T.TypedDict):
     listing_type: str
     market: str
-    baths: T.List[int]
-    beds: T.List[int]
+    baths: str
+    beds: str
     maxprice: int
     minprice: int
     maxsize: int
@@ -21,8 +21,8 @@ class SearchParams(T.TypedDict):
 SEARCH_PARAMS_DEFAULT: SearchParams = {
     "listing_type": "sale",
     "market": "residential",
-    "baths": [1, 2, 3, 4, 5],
-    "beds": [0, 1, 2, 3, 4, 5],
+    "baths": "[1, 2, 3, 4, 5]",
+    "beds": "[0, 1, 2, 3, 4, 5]",
     "maxprice": 15000000,
     "minprice": 0,
     "maxsize": 6000,
@@ -35,8 +35,8 @@ SEARCH_PARAMS_DEFAULT: SearchParams = {
 TEST_PARAMS: SearchParams = {
     "listing_type": "sale",
     "market": "residential",
-    "baths": [1, 2, 3, 4, 5],
-    "beds": [0, 1, 2, 3, 4, 5],
+    "baths": "[1, 2, 3, 4, 5]",
+    "beds": "[0, 1, 2, 3, 4, 5]",
     "maxprice": 15000000,
     "minprice": 0,
     "maxsize": 6000,

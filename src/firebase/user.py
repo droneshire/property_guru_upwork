@@ -189,12 +189,19 @@ class FirebaseUser:
                 search_params: SearchParams = {
                     "minprice": info["searchParams"]["minPrice"],
                     "maxprice": info["searchParams"]["maxPrice"],
-                    "beds": list(
-                        range(info["searchParams"]["minBeds"], info["searchParams"]["maxBeds"] + 1)
+                    "beds": str(
+                        list(
+                            range(
+                                info["searchParams"]["minBeds"], info["searchParams"]["maxBeds"] + 1
+                            )
+                        )
                     ),
-                    "baths": list(
-                        range(
-                            info["searchParams"]["minBaths"], info["searchParams"]["maxBaths"] + 1
+                    "baths": str(
+                        list(
+                            range(
+                                info["searchParams"]["minBaths"],
+                                info["searchParams"]["maxBaths"] + 1,
+                            )
                         )
                     ),
                     "minsize": info["searchParams"]["minSize"],
