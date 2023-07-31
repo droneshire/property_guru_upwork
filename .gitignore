@@ -1,3 +1,4 @@
+logs/
 params.json
 firebase_service_account.json
 *.pid
