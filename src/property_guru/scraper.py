@@ -17,6 +17,7 @@ from property_guru.data_types import (
 )
 from property_guru.urls import PropertyForSale
 from util import log
+from util.format import get_pretty_seconds
 from util.wait import wait
 from util.web2_client import Web2Client
 
@@ -38,6 +39,8 @@ class PropertyGuru:
         if self.USE_TEST_PARAMS:
             log.print_ok_blue("Using test params...")
             parameters = copy.deepcopy(TEST_PARAMS)
+
+        log.print_ok_blue("Checking page 1...")
 
         browser_url_params = urllib.parse.urlencode(parameters)
         browser_url = f"{PropertyForSale.URL}?{browser_url_params}"
@@ -82,7 +85,7 @@ class PropertyGuru:
             new_properties = self._get_property_from_page(page, parameters, browser_url_params)
             properties.extend(new_properties)
 
-        log.print_ok_blue_arrow(f"Found {len(properties)} properties")
+        log.print_ok_arrow(f"Found {len(properties)} properties")
         return properties
 
     def _get_xpath(self, element: T.Any) -> str:
@@ -108,9 +111,12 @@ class PropertyGuru:
 
         url = PropertyForSale.URL + f"/{page}"
 
-        wait(random.randint(20, 60))
+        wait_time = random.randint(60, 180)
+        wait(wait_time)
 
-        log.print_ok_blue(f"Checking page {page}...")
+        log.print_ok_blue(
+            f"After waiting for {get_pretty_seconds(int(wait_time))} Checking page {page}..."
+        )
 
         browser_url = f"{url}?{browser_url_params}"
         log.print_normal(f"Equivalent search:\n{browser_url}")
