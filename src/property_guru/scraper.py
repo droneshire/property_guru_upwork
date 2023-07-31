@@ -22,7 +22,7 @@ from util.web2_client import Web2Client
 
 
 class PropertyGuru:
-    USE_TEST_PARAMS = True
+    USE_TEST_PARAMS = False
     USE_TEST_HTML = False
 
     def __init__(self, dry_run: bool = False, verbose: bool = False) -> None:
