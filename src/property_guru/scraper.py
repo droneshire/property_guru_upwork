@@ -122,7 +122,7 @@ class PropertyGuru:
 
         if not response:
             log.print_fail(f"Failed to get response on page {page}!")
-            return []
+            raise ValueError("Failed to get response!")
 
         store_response_html = os.path.join(
             log.get_logging_dir(PROJECT_NAME),

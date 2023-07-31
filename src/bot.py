@@ -3,6 +3,8 @@ import os
 import time
 import typing as T
 
+import deepdiff
+
 from firebase.user import FirebaseUser
 from property_guru.data_types import SEARCH_PARAMS_DEFAULT, ListingDescription, SearchParams
 from property_guru.scraper import PropertyGuru
@@ -30,6 +32,7 @@ class ScraperBot:
     ) -> None:
         self.telegram: TelegramUtil = telegram_util
         self.telegram_channel_name = telegram_channel_name
+        self.telegram_channel_id = 0
         self.dry_run = dry_run
         self.scraper = PropertyGuru(dry_run=dry_run, verbose=verbose)
         self.params_file = params_file
@@ -47,6 +50,9 @@ class ScraperBot:
 
     def init(self) -> None:
         self.check_and_update_params()
+        channel_id = self.telegram.get_chat_id(self.telegram_channel_name)
+        if channel_id:
+            self.telegram_channel_id = channel_id
 
     def check_and_update_params(self) -> None:
         if self._try_to_load_params_from_file():
@@ -63,10 +69,10 @@ class ScraperBot:
             try:
                 current_listings: T.List[ListingDescription] = self.scraper.get_properties(params)
             except ValueError:
-                self.throttling_time = self.throttling_time * 2 + 1
+                self.throttling_time = self.throttling_time * 2 + 60
                 log.print_fail(f"Failed to get properties! Throttling {self.throttling_time}s...")
                 wait(self.throttling_time)
-                continue
+                break
 
             if not current_listings:
                 self.listing_ids[user] = []
@@ -89,6 +95,8 @@ class ScraperBot:
                 self._handle_new_listing(user, listing)
                 time.sleep(1)
 
+            self.throttling_time = 0.0
+
         self._try_to_update_data_to_firebase()
 
     def _handle_new_listing(self, user: str, listing: ListingDescription) -> None:
@@ -105,12 +113,11 @@ class ScraperBot:
         message += f"Baths: {listing['baths']}\n"
         message += f"Square Footage: {listing['square_footage']}\n"
 
-        channel_id = self.telegram.get_chat_id(self.telegram_channel_name)
-        if not channel_id:
+        if not self.telegram_channel_id:
             log.print_fail(f"Telegram channel {self.telegram_channel_name} not found!")
             return
 
-        self.telegram.send_message(channel_id, message)
+        self.telegram.send_message(self.telegram_channel_id, message)
 
     def _try_to_load_params_from_file(self) -> bool:
         if not os.path.exists(self.params_file):
@@ -142,14 +149,23 @@ class ScraperBot:
     def _try_to_update_data_from_firebase(self) -> None:
         for user, info in self.firebase_user.get_search_params().items():
             log.print_bold(f"Getting params for {user} from firebase...")
-            log.print_normal(f"Old params:\n{json.dumps(self.params.get(user, {}), indent=4)}")
-            log.print_bright(f"New params:\n{json.dumps(info, indent=4)}")
+            last_json = dict(self.params.get(user, {}))
+            new_json = dict(info)
+            diff = deepdiff.DeepDiff(last_json, new_json, ignore_order=True)
+            if diff:
+                diff_json = diff.to_json(indent=4, sort_keys=True, ensure_ascii=True)
+                log.print_normal(f"Params updated:\n{diff_json}")
             self.params[user] = info
 
         for user, ids in self.firebase_user.get_listing_ids().items():
             log.print_bold(f"Getting listing ids for {user} from firebase...")
-            log.print_normal(f"Old listing ids:\n{self.listing_ids.get(user, [])}")
-            log.print_bright(f"New listing ids:\n{ids}")
+            last_json = {"ids": self.listing_ids.get(user, [])}
+            new_json = {"ids": ids}
+            diff = deepdiff.DeepDiff(last_json, new_json, ignore_order=True)
+            if diff:
+                diff_json = diff.to_json(indent=4, sort_keys=True, ensure_ascii=True)
+                log.print_normal(f"Listing ids updated:\n{diff_json}")
+
             self.listing_ids[user] = ids
 
     def _check_firebase(self) -> None:
