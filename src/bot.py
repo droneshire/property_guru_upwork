@@ -94,14 +94,17 @@ class ScraperBot:
             self.listing_ids[user] = list(current_listings_by_id.keys())
             for listing_id in new_listing_ids:
                 listing = current_listings_by_id[listing_id]
-                self._handle_new_listing(user, listing)
+                if not self._handle_new_listing(user, listing):
+                    log.print_warn(f"Failed to send message for {user}!")
+                    self.listing_ids[user].remove(listing_id)
+
                 time.sleep(1)
 
             self.throttling_time = 0.0
 
         self._try_to_update_data_to_firebase()
 
-    def _handle_new_listing(self, user: str, listing: ListingDescription) -> None:
+    def _handle_new_listing(self, user: str, listing: ListingDescription) -> bool:
         log.print_bold(f"New listing found for {user}!")
         log.print_normal(json.dumps(listing, indent=4))
         house_emoji = "\U0001f3e0"
@@ -117,9 +120,14 @@ class ScraperBot:
 
         if not self.telegram_channel_id:
             log.print_fail(f"Telegram channel {self.telegram_channel_name} not found!")
-            return
+            return False
 
-        self.telegram.send_message(self.telegram_channel_id, message)
+        try:
+            self.telegram.send_message(self.telegram_channel_id, message)
+            return True
+        except:  # pylint: disable=bare-except
+            log.print_fail("Failed to send message!")
+            return False
 
     def _try_to_load_params_from_file(self) -> bool:
         if not os.path.exists(self.params_file):
@@ -161,8 +169,8 @@ class ScraperBot:
 
         for user, ids in self.firebase_user.get_listing_ids().items():
             log.print_bold(f"Getting listing ids for {user} from firebase...")
-            last_json = {"ids": self.listing_ids.get(user, [])}
-            new_json = {"ids": ids}
+            last_json = {"ids": sorted(self.listing_ids.get(user, []))}
+            new_json = {"ids": sorted(ids)}
             diff = deepdiff.DeepDiff(last_json, new_json, ignore_order=True)
             if diff:
                 diff_json = diff.to_json(indent=4, sort_keys=True, ensure_ascii=True)

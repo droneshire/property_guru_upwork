@@ -33,6 +33,7 @@ class PropertyGuru:
         self.verbose = verbose
 
     def get_properties(self, user: str, parameters: SearchParams) -> T.List[ListingDescription]:
+        # pylint: disable=too-many-locals
         if not parameters:
             log.print_fail("No parameters provided!")
             return []
@@ -41,14 +42,23 @@ class PropertyGuru:
             log.print_ok_blue("Using test params...")
             parameters = copy.deepcopy(TEST_PARAMS)
 
-        log.print_ok_blue("Checking page 1...")
+        if not parameters["property_id"]:
+            log.print_warn(f"Invalid listing id for {user}, skipping...")
+            return []
+
+        wait_time = random.randint(60, 100)
+        wait(wait_time)
+
+        log.print_ok_blue(
+            f"After waiting for {get_pretty_seconds(int(wait_time))}, checking page 1..."
+        )
 
         browser_url_params = urllib.parse.urlencode(parameters)
         browser_url = f"{PropertyForSale.URL}?{browser_url_params}"
         log.print_normal(f"Equivalent search:\n{browser_url}")
 
         log_dir = os.path.join(PropertyGuru.RAW_HTML_LOG_DIR_NAME, user)
-        file_util.make_sure_path_exists(log_dir, assume_not_file=True)
+        file_util.make_sure_path_exists(log_dir, ignore_extension=True)
 
         store_response_html = os.path.join(
             log_dir,
@@ -121,7 +131,7 @@ class PropertyGuru:
         wait(wait_time)
 
         log.print_ok_blue(
-            f"After waiting for {get_pretty_seconds(int(wait_time))} Checking page {page}..."
+            f"After waiting for {get_pretty_seconds(int(wait_time))}, checking page {page}..."
         )
 
         browser_url = f"{url}?{browser_url_params}"
@@ -138,7 +148,6 @@ class PropertyGuru:
 
         store_response_html = os.path.join(
             log_dir,
-            user,
             (
                 f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}-"
                 f"{browser_url_params}-page-{page}.html"
