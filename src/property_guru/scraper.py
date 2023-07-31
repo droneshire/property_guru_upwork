@@ -16,7 +16,7 @@ from property_guru.data_types import (
     SearchParams,
 )
 from property_guru.urls import PropertyForSale
-from util import log
+from util import file_util, log
 from util.format import get_pretty_seconds
 from util.wait import wait
 from util.web2_client import Web2Client
@@ -25,13 +25,14 @@ from util.web2_client import Web2Client
 class PropertyGuru:
     USE_TEST_PARAMS = False
     USE_TEST_HTML = False
+    RAW_HTML_LOG_DIR_NAME = os.path.join(log.get_logging_dir(PROJECT_NAME), "search_results")
 
     def __init__(self, dry_run: bool = False, verbose: bool = False) -> None:
         self.web2 = Web2Client(dry_run=dry_run)
         self.dry_run = dry_run
         self.verbose = verbose
 
-    def get_properties(self, parameters: SearchParams) -> T.List[ListingDescription]:
+    def get_properties(self, user: str, parameters: SearchParams) -> T.List[ListingDescription]:
         if not parameters:
             log.print_fail("No parameters provided!")
             return []
@@ -46,8 +47,11 @@ class PropertyGuru:
         browser_url = f"{PropertyForSale.URL}?{browser_url_params}"
         log.print_normal(f"Equivalent search:\n{browser_url}")
 
+        log_dir = os.path.join(PropertyGuru.RAW_HTML_LOG_DIR_NAME, user)
+        file_util.make_sure_path_exists(log_dir, assume_not_file=True)
+
         store_response_html = os.path.join(
-            log.get_logging_dir(PROJECT_NAME),
+            log_dir,
             f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}-{browser_url_params}-page-1.html",
         )
 
@@ -82,7 +86,9 @@ class PropertyGuru:
 
         # iterate through random pages but make sure we get them all
         for page in random.sample(range(1, pages + 1), pages):
-            new_properties = self._get_property_from_page(page, parameters, browser_url_params)
+            new_properties = self._get_property_from_page(
+                page, parameters, browser_url_params, log_dir
+            )
             properties.extend(new_properties)
 
         log.print_ok_arrow(f"Found {len(properties)} properties")
@@ -104,7 +110,7 @@ class PropertyGuru:
         return f"/{element.name}{xpath}"
 
     def _get_property_from_page(
-        self, page: int, parameters: SearchParams, browser_url_params: str
+        self, page: int, parameters: SearchParams, browser_url_params: str, log_dir: str
     ) -> T.List[ListingDescription]:
         if page == 1:
             return []
@@ -131,7 +137,8 @@ class PropertyGuru:
             raise ValueError("Failed to get response!")
 
         store_response_html = os.path.join(
-            log.get_logging_dir(PROJECT_NAME),
+            log_dir,
+            user,
             (
                 f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}-"
                 f"{browser_url_params}-page-{page}.html"

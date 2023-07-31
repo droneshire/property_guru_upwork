@@ -67,7 +67,9 @@ class ScraperBot:
         for user, params in self.params.items():
             log.print_ok_blue(f"Checking properties for {user}...")
             try:
-                current_listings: T.List[ListingDescription] = self.scraper.get_properties(params)
+                current_listings: T.List[ListingDescription] = self.scraper.get_properties(
+                    user, params
+                )
             except ValueError:
                 self.throttling_time = self.throttling_time * 2 + 60
                 log.print_fail(f"Failed to get properties! Throttling {self.throttling_time}s...")
