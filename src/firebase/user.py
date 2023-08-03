@@ -181,7 +181,17 @@ class FirebaseUser:
         user_search_params = {}
         with self.database_cache_lock:
             for user, info in self.database_cache.items():
-                property_id = info["searchParams"]["searchString"].split("-")[-1]
+                if not info["searchParams"].get("searchString", ""):
+                    continue
+
+                try:
+                    property_id = info["searchParams"]["searchString"].split("-")[-1]
+                    free_text = ""
+                except IndexError:
+                    log.print_fail(f"Invalid property id {property_id}...trying free form search")
+                    property_id = ""
+                    free_text = info["searchParams"]["searchString"]
+
                 if isinstance(property_id, str) and not property_id.isdigit():
                     log.print_fail(f"Invalid property id {property_id}!")
                     continue
@@ -210,7 +220,8 @@ class FirebaseUser:
                     "search": True,
                     "listing_type": "sale",
                     "market": "residential",
-                    "property_id": int(property_id),
+                    "property_id": property_id,
+                    "freetext": free_text,
                 }
                 user_search_params[user] = search_params
         return user_search_params

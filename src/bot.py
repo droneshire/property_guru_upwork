@@ -157,6 +157,8 @@ class ScraperBot:
             self.firebase_user.update_listing_ids(user, ids)
 
     def _try_to_update_data_from_firebase(self) -> None:
+        self.params = {}
+
         for user, info in self.firebase_user.get_search_params().items():
             log.print_bold(f"Getting params for {user} from firebase...")
             last_json = dict(self.params.get(user, {}))
@@ -165,9 +167,18 @@ class ScraperBot:
             if diff:
                 diff_json = diff.to_json(indent=4, sort_keys=True, ensure_ascii=True)
                 log.print_normal(f"Params updated:\n{diff_json}")
+
+            if not info["property_id"]:
+                self.listing_ids[user] = []
+
             self.params[user] = info
 
         for user, ids in self.firebase_user.get_listing_ids().items():
+            if user not in self.params:
+                log.print_warn(f"Found listing ids for {user} w/out params. Removing cached ids")
+                self.listing_ids[user] = []
+                continue
+
             log.print_bold(f"Getting listing ids for {user} from firebase...")
             last_json = {"ids": sorted(self.listing_ids.get(user, []))}
             new_json = {"ids": sorted(ids)}

@@ -15,7 +15,8 @@ class SearchParams(T.TypedDict):
     minsize: int
     newProject: str
     search: bool
-    property_id: int
+    property_id: str
+    freetext: str
 
 
 SEARCH_PARAMS_DEFAULT: SearchParams = {
@@ -29,7 +30,8 @@ SEARCH_PARAMS_DEFAULT: SearchParams = {
     "minsize": 0,
     "newProject": "all",
     "search": True,
-    "property_id": 0,
+    "property_id": "0",
+    "freetext": "",
 }
 
 TEST_PARAMS: SearchParams = {
@@ -43,7 +45,8 @@ TEST_PARAMS: SearchParams = {
     "minsize": 0,
     "newProject": "all",
     "search": True,
-    "property_id": 71,
+    "property_id": "71",
+    "freetext": "",
 }
 
 
