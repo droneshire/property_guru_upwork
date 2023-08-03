@@ -184,17 +184,13 @@ class FirebaseUser:
                 if not info["searchParams"].get("searchString", ""):
                     continue
 
-                try:
-                    property_id = info["searchParams"]["searchString"].split("-")[-1]
-                    free_text = ""
-                except IndexError:
+                property_id = info["searchParams"]["searchString"].split("-")[-1]
+                free_text = ""
+
+                if isinstance(property_id, str) and not property_id.isdigit():
                     log.print_fail(f"Invalid property id {property_id}...trying free form search")
                     property_id = ""
                     free_text = info["searchParams"]["searchString"]
-
-                if isinstance(property_id, str) and not property_id.isdigit():
-                    log.print_fail(f"Invalid property id {property_id}!")
-                    continue
 
                 search_params: SearchParams = {
                     "minprice": info["searchParams"]["minPrice"],
