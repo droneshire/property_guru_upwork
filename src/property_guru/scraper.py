@@ -46,7 +46,9 @@ class PropertyGuru:
             log.print_warn(f"Invalid listing id for {user}, skipping...")
             return []
 
-        wait_time = random.randint(60, 100)
+        request_parameters = {key: value for key, value in parameters.items() if value}
+
+        wait_time = random.randint(1, 10)
         wait(wait_time)
 
         log.print_ok_blue(
@@ -72,7 +74,7 @@ class PropertyGuru:
             log.print_normal(f"Search Params:\n{json.dumps(parameters, indent=4)}")
             response = self.web2.get_request(
                 url=PropertyForSale.URL,
-                params=dict(parameters),
+                params=request_parameters,
             )
 
             if not response:
@@ -97,7 +99,7 @@ class PropertyGuru:
         # iterate through random pages but make sure we get them all
         for page in random.sample(range(1, pages + 1), pages):
             new_properties = self._get_property_from_page(
-                page, parameters, browser_url_params, log_dir
+                page, request_parameters, browser_url_params, log_dir
             )
             properties.extend(new_properties)
 
@@ -120,14 +122,14 @@ class PropertyGuru:
         return f"/{element.name}{xpath}"
 
     def _get_property_from_page(
-        self, page: int, parameters: SearchParams, browser_url_params: str, log_dir: str
+        self, page: int, parameters: T.Dict[str, T.Any], browser_url_params: str, log_dir: str
     ) -> T.List[ListingDescription]:
         if page == 1:
             return []
 
         url = PropertyForSale.URL + f"/{page}"
 
-        wait_time = random.randint(60, 180)
+        wait_time = random.randint(1, 10)
         wait(wait_time)
 
         log.print_ok_blue(
@@ -139,7 +141,7 @@ class PropertyGuru:
 
         response = self.web2.get_request(
             url=url,
-            params=dict(parameters),
+            params=parameters,
         )
 
         if not response:
