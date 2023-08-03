@@ -42,20 +42,20 @@ class PropertyGuru:
             log.print_ok_blue("Using test params...")
             parameters = copy.deepcopy(TEST_PARAMS)
 
-        if not parameters["property_id"]:
+        if not parameters["property_id"] and not parameters["freetext"]:
             log.print_warn(f"Invalid listing id for {user}, skipping...")
             return []
 
         request_parameters = {key: value for key, value in parameters.items() if value}
 
-        wait_time = random.randint(1, 10)
+        wait_time = random.randint(60, 100)
         wait(wait_time)
 
         log.print_ok_blue(
             f"After waiting for {get_pretty_seconds(int(wait_time))}, checking page 1..."
         )
 
-        browser_url_params = urllib.parse.urlencode(parameters)
+        browser_url_params = urllib.parse.urlencode(request_parameters)
         browser_url = f"{PropertyForSale.URL}?{browser_url_params}"
         log.print_normal(f"Equivalent search:\n{browser_url}")
 
@@ -71,7 +71,7 @@ class PropertyGuru:
             with open(store_response_html, "r", encoding="utf-8") as infile:
                 content = infile.read()
         else:
-            log.print_normal(f"Search Params:\n{json.dumps(parameters, indent=4)}")
+            log.print_normal(f"Search Params:\n{json.dumps(request_parameters, indent=4)}")
             response = self.web2.get_request(
                 url=PropertyForSale.URL,
                 params=request_parameters,
@@ -129,7 +129,7 @@ class PropertyGuru:
 
         url = PropertyForSale.URL + f"/{page}"
 
-        wait_time = random.randint(1, 10)
+        wait_time = random.randint(60, 100)
         wait(wait_time)
 
         log.print_ok_blue(
