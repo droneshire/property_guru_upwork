@@ -191,7 +191,7 @@ class FirebaseUser:
 
         property_type = ["C", "L"]
 
-        if info["includeHbd"]:
+        if info.get("includeHbd", True):
             property_type.append("H")
 
         search_params: property_guru_data_types.SearchParams = {
