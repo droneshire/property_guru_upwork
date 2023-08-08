@@ -196,17 +196,25 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
     )
 
 
-print_ok_blue = make_formatter_printer(Colors.OKBLUE.value)
-print_ok = make_formatter_printer(Colors.OKGREEN.value)
-print_bright = make_formatter_printer(Colors.OKCYAN.value)
-print_warn = make_formatter_printer(Colors.WARNING.value)
-print_fail = make_formatter_printer(Colors.FAIL.value)
-print_bold = make_formatter_printer(Colors.BOLD.value)
-print_normal = make_formatter_printer(Colors.ENDC.value)
-print_normal_arrow = make_formatter_printer(Colors.ENDC.value, prefix=Prefixes.ARROW.value)
-print_ok_arrow = make_formatter_printer(Colors.OKGREEN.value, prefix=Prefixes.ARROW.value)
-print_ok_blue_arrow = make_formatter_printer(Colors.OKBLUE.value, prefix=Prefixes.ARROW.value)
-print_fail_arrow = make_formatter_printer(Colors.FAIL.value, prefix=Prefixes.ARROW.value)
+print_ok_blue = make_formatter_printer(Colors.OKBLUE.value, log_level=loggin.INFO)
+print_ok = make_formatter_printer(Colors.OKGREEN.value, log_level=loggin.INFO)
+print_bright = make_formatter_printer(Colors.OKCYAN.value, log_level=loggin.INFO)
+print_warn = make_formatter_printer(Colors.WARNING.value, log_level=loggin.CRITICAL)
+print_fail = make_formatter_printer(Colors.FAIL.value, log_level=loggin.CRITICAL)
+print_bold = make_formatter_printer(Colors.BOLD.value, log_level=loggin.INFO)
+print_normal = make_formatter_printer(Colors.ENDC.value, log_level=loggin.INFO)
+print_normal_arrow = make_formatter_printer(
+    Colors.ENDC.value, prefix=Prefixes.ARROW.value, log_level=loggin.INFO
+)
+print_ok_arrow = make_formatter_printer(
+    Colors.OKGREEN.value, prefix=Prefixes.ARROW.value, log_level=loggin.CRITICAL
+)
+print_ok_blue_arrow = make_formatter_printer(
+    Colors.OKBLUE.value, prefix=Prefixes.ARROW.value, log_level=loggin.INFO
+)
+print_fail_arrow = make_formatter_printer(
+    Colors.FAIL.value, prefix=Prefixes.ARROW.value, log_level=loggin.CRITICAL
+)
 
 format_ok_blue = make_formatter_printer(Colors.OKBLUE.value, return_formatter=True)
 format_ok = make_formatter_printer(Colors.OKGREEN.value, return_formatter=True)

@@ -36,21 +36,16 @@ def parse_args() -> argparse.Namespace:
         default=random.randint(60 * 5, 60 * 10),
     )
 
-    src_dir = os.path.dirname(os.path.dirname(__file__))
-    root_dir = os.path.dirname(src_dir)
-    parser.add_argument(
-        "--params-file",
-        type=str,
-        help="File to store search parameters",
-        default=os.path.join(root_dir, "params.json"),
-    )
-
     parser.add_argument(
         "--param-update-period",
         type=int,
         help="Time between each parameter update (in seconds)",
         default=60 * 1,
     )
+
+    src_dir = os.path.dirname(os.path.dirname(__file__))
+    root_dir = os.path.dirname(src_dir)
+
     parser.add_argument(
         "--firebase-credentials-file",
         type=str,
@@ -89,7 +84,6 @@ def run_loop(args: argparse.Namespace) -> None:
     bot = ScraperBot(
         telegram,
         telegram_channel_name,
-        args.params_file,
         args.firebase_credentials_file,
         args.param_update_period,
         args.dry_run,
