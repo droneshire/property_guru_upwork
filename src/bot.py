@@ -64,7 +64,7 @@ class ScraperBot:
                     query.user, query.search
                 )
             except ValueError:
-                self.throttling_time = self.throttling_time * 2 + 60
+                self.throttling_time = self.throttling_time * 2 + 30
                 log.print_fail(f"Failed to get properties! Throttling {self.throttling_time}s...")
                 wait(self.throttling_time)
                 break
@@ -90,14 +90,14 @@ class ScraperBot:
                     log.print_warn(f"Failed to send message for {query.user}!")
                     self.listing_ids[query.user].remove(listing_id)
 
-                time.sleep(1)
+                time.sleep(5.0)
 
             self.throttling_time = 0.0
 
         self._try_to_update_data_to_firebase()
 
     def _handle_new_listing(self, user: str, listing: ListingDescription) -> bool:
-        log.print_bold(f"New listing found for {user}!")
+        log.print_bold(f"New listing found for {user}!\n\n")
         log.print_normal(json.dumps(listing, indent=4))
         house_emoji = "\U0001f3e0"
         message = f"{house_emoji * 2} New listing found for {user}!\n"

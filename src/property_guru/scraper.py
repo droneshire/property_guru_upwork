@@ -21,6 +21,8 @@ from util.format import get_pretty_seconds
 from util.wait import wait
 from util.web2_client import Web2Client
 
+DIVIDER_STRING = f"{'=' * 100}"
+
 
 class PropertyGuru:
     USE_TEST_PARAMS = False
@@ -50,9 +52,12 @@ class PropertyGuru:
 
         request_parameters = {key: value for key, value in parameters.items() if value}
 
+        log.print_normal(DIVIDER_STRING)
+
         wait_time = random.randint(*self.WAIT_RANGE)
         wait(wait_time)
 
+        log.print_bright("PAGE 1")
         log.print_ok_blue(
             f"After waiting for {get_pretty_seconds(int(wait_time))}, checking page 1..."
         )
@@ -100,9 +105,26 @@ class PropertyGuru:
 
         log.print_ok_arrow(f"Found {len(properties)} properties on page 1/{pages}...")
 
-        # iterate through random pages but make sure we get them all
-        log.print_normal(f"{'=' * 100}")
-        for page in random.sample(range(2, pages + 1), pages):
+        log.print_normal(DIVIDER_STRING)
+
+        properties.extend(
+            self._get_properties_from_other_pages(
+                request_parameters, browser_url_params, log_dir, pages
+            )
+        )
+
+        return properties
+
+    def _get_properties_from_other_pages(
+        self,
+        request_parameters: T.Dict[str, T.Any],
+        browser_url_params: str,
+        log_dir: str,
+        pages: int,
+    ) -> T.List[ListingDescription]:
+        properties = []
+
+        for page in random.sample(range(2, pages + 1), pages - 1):
             try:
                 new_properties = self._get_property_from_page(
                     page, request_parameters, browser_url_params, log_dir, pages
@@ -111,15 +133,16 @@ class PropertyGuru:
                 properties.extend(new_properties)
                 self.throttling_time = 0.0
             except ValueError:
-                self.throttling_time = self.throttling_time * 2 + 60
+                self.throttling_time = self.throttling_time * 2 + 30
                 log.print_fail(
                     f"Failed to get properties on page {page}!\n"
                     f"Throttling {self.throttling_time}s before trying next page..."
                 )
                 wait(self.throttling_time)
-            log.print_normal(f"{'=' * 100}")
+            log.print_normal(DIVIDER_STRING)
 
         log.print_ok_arrow(f"Found {len(properties)} properties")
+
         return properties
 
     def _get_xpath(self, element: T.Any) -> str:
