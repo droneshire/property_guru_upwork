@@ -80,7 +80,7 @@ class PropertyData(T.TypedDict):
     title: str
     address: str
     image: str
-    link: dict[str, str]
+    link: T.Dict[str, str]
 
 
 class PropertyDetails(T.TypedDict):
@@ -122,14 +122,14 @@ class PropertyInfo(T.TypedDict):
     title: str
     address: str
     image: str
-    link: dict[str, str]
+    link: T.Dict[str, str]
     data: PropertyDetails
     pricing: PropertyPricing
     rooms: PropertyRooms
 
 
 class PropertyListing(T.TypedDict):
-    metadata: dict
+    metadata: T.Dict[str, str]
     context: PropertyContext
     shouldRenderRooms: bool
 
