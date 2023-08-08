@@ -46,7 +46,7 @@ def parse_args() -> argparse.Namespace:
         "--max-pages",
         type=int,
         help="Max pages to scrape per search",
-        default=5,
+        default=2,
     )
     parser.add_argument(
         "--verbose",
