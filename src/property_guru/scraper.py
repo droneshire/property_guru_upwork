@@ -69,9 +69,12 @@ class PropertyGuru:
         log_dir = os.path.join(PropertyGuru.RAW_HTML_LOG_DIR_NAME, user)
         file_util.make_sure_path_exists(log_dir, ignore_extension=True)
 
+        serialized_params = "-".join(
+            [f"{key}={value}" for key, value in request_parameters.items()]
+        )
         store_response_html = os.path.join(
             log_dir,
-            f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}-{browser_url_params}-page-1.html",
+            f"{PropertyForSale.URL.rsplit('/', maxsplit=1)[-1]}-{serialized_params}-page-1.html",
         )
 
         if self.USE_TEST_HTML and os.path.isfile(store_response_html):
