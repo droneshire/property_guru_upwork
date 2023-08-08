@@ -130,7 +130,7 @@ class FirebaseUser:
         )
 
     def update_watchers(self) -> None:
-        log.print_warn("Updating watcher...")
+        log.print_normal("Updating watcher...")
         if self.users_watcher:
             self.users_watcher.unsubscribe()
 
@@ -185,7 +185,7 @@ class FirebaseUser:
         free_text = ""
 
         if isinstance(property_id, str) and not property_id.isdigit():
-            log.print_fail(f"Invalid property id {property_id}...trying free form search")
+            log.print_warn(f"Invalid property id {property_id}...trying free form search")
             property_id = ""
             free_text = search_string
 
@@ -223,7 +223,7 @@ class FirebaseUser:
                 search_strings = (s.strip() for s in search_string.split(","))
 
                 for search_string in search_strings:
-                    log.print_normal(f"Adding search `{search_string}` for {user}")
+                    log.print_ok_blue_arrow(f"Adding search `{search_string}` for {user}")
                     search_params = self._get_search_params(search_string, info["searchParams"])
                     searches.append(Search(user, search_params))
 

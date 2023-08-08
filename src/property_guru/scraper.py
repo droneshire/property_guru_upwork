@@ -26,11 +26,13 @@ class PropertyGuru:
     USE_TEST_PARAMS = False
     USE_TEST_HTML = False
     RAW_HTML_LOG_DIR_NAME = os.path.join(log.get_logging_dir(PROJECT_NAME), "search_results")
+    WAIT_RANGE = (60, 80)
 
     def __init__(self, dry_run: bool = False, verbose: bool = False) -> None:
         self.web2 = Web2Client(dry_run=dry_run)
         self.dry_run = dry_run
         self.verbose = verbose
+        self.throttling_time = 0.0
 
     def get_properties(self, user: str, parameters: SearchParams) -> T.List[ListingDescription]:
         # pylint: disable=too-many-locals
@@ -48,7 +50,7 @@ class PropertyGuru:
 
         request_parameters = {key: value for key, value in parameters.items() if value}
 
-        wait_time = random.randint(60, 100)
+        wait_time = random.randint(*self.WAIT_RANGE)
         wait(wait_time)
 
         log.print_ok_blue(
@@ -96,12 +98,26 @@ class PropertyGuru:
 
         properties.extend(self._get_property_info_from_page(soup))
 
+        log.print_ok_arrow(f"Found {len(properties)} properties on page 1/{pages}...")
+
         # iterate through random pages but make sure we get them all
-        for page in random.sample(range(1, pages + 1), pages):
-            new_properties = self._get_property_from_page(
-                page, request_parameters, browser_url_params, log_dir
-            )
-            properties.extend(new_properties)
+        log.print_normal(f"{'=' * 100}")
+        for page in random.sample(range(2, pages + 1), pages):
+            try:
+                new_properties = self._get_property_from_page(
+                    page, request_parameters, browser_url_params, log_dir, pages
+                )
+                log.print_ok_arrow(f"Found {len(new_properties)} properties on page {page}...")
+                properties.extend(new_properties)
+                self.throttling_time = 0.0
+            except ValueError:
+                self.throttling_time = self.throttling_time * 2 + 60
+                log.print_fail(
+                    f"Failed to get properties on page {page}!\n"
+                    f"Throttling {self.throttling_time}s before trying next page..."
+                )
+                wait(self.throttling_time)
+            log.print_normal(f"{'=' * 100}")
 
         log.print_ok_arrow(f"Found {len(properties)} properties")
         return properties
@@ -122,16 +138,22 @@ class PropertyGuru:
         return f"/{element.name}{xpath}"
 
     def _get_property_from_page(
-        self, page: int, parameters: T.Dict[str, T.Any], browser_url_params: str, log_dir: str
+        self,
+        page: int,
+        parameters: T.Dict[str, T.Any],
+        browser_url_params: str,
+        log_dir: str,
+        total_pages: int,
     ) -> T.List[ListingDescription]:
         if page == 1:
             return []
 
         url = PropertyForSale.URL + f"/{page}"
 
-        wait_time = random.randint(60, 100)
+        wait_time = random.randint(*self.WAIT_RANGE)
         wait(wait_time)
 
+        log.print_bright(f"PAGE {page}/{total_pages}")
         log.print_ok_blue(
             f"After waiting for {get_pretty_seconds(int(wait_time))}, checking page {page}..."
         )
