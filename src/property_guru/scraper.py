@@ -124,10 +124,13 @@ class PropertyGuru:
     ) -> T.List[ListingDescription]:
         properties = []
 
+        pages_parsed = 1
+
         for page in random.sample(range(2, pages + 1), pages - 1):
+            pages_parsed += 1
             try:
                 new_properties = self._get_property_from_page(
-                    page, request_parameters, browser_url_params, log_dir, pages
+                    page, request_parameters, browser_url_params, log_dir, pages, pages_parsed
                 )
                 log.print_ok_arrow(f"Found {len(new_properties)} properties on page {page}...")
                 properties.extend(new_properties)
@@ -145,21 +148,6 @@ class PropertyGuru:
 
         return properties
 
-    def _get_xpath(self, element: T.Any) -> str:
-        xpath = ""
-        for parent in element.parents:
-            if parent.name:
-                siblings = parent.find_all(parent.name, recursive=False)
-                try:
-                    xpath_index = siblings.index(element) + 1
-                except ValueError:
-                    # If the element is not found in the parent's siblings,
-                    # skip it or handle it differently.
-                    continue
-                xpath = f"/{parent.name}[{xpath_index}]{xpath}"
-            element = parent
-        return f"/{element.name}{xpath}"
-
     def _get_property_from_page(
         self,
         page: int,
@@ -167,6 +155,7 @@ class PropertyGuru:
         browser_url_params: str,
         log_dir: str,
         total_pages: int,
+        pages_parsed: int,
     ) -> T.List[ListingDescription]:
         if page == 1:
             return []
@@ -176,7 +165,7 @@ class PropertyGuru:
         wait_time = random.randint(*self.WAIT_RANGE)
         wait(wait_time)
 
-        log.print_bright(f"PAGE {page}/{total_pages}")
+        log.print_bright(f"PAGE {pages_parsed}/{total_pages}")
         log.print_ok_blue(
             f"After waiting for {get_pretty_seconds(int(wait_time))}, checking page {page}..."
         )
