@@ -209,6 +209,8 @@ class FirebaseUser:
             "market": "residential",
             "property_id": property_id,
             "freetext": free_text,
+            "sort": "date",
+            "order": "desc",
         }
         return search_params
 

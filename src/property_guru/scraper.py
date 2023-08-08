@@ -30,11 +30,11 @@ class PropertyGuru:
     RAW_HTML_LOG_DIR_NAME = os.path.join(log.get_logging_dir(PROJECT_NAME), "search_results")
     WAIT_RANGE = (60, 80)
 
-    def __init__(self, dry_run: bool = False, verbose: bool = False) -> None:
-        self.web2 = Web2Client(dry_run=dry_run)
+    def __init__(self, max_pages: int, dry_run: bool = False, verbose: bool = False) -> None:
         self.dry_run = dry_run
         self.verbose = verbose
         self.throttling_time = 0.0
+        self.max_pages = max_pages
 
     def get_properties(self, user: str, parameters: SearchParams) -> T.List[ListingDescription]:
         # pylint: disable=too-many-locals
@@ -79,7 +79,7 @@ class PropertyGuru:
                 content = infile.read()
         else:
             log.print_normal(f"Search Params:\n{json.dumps(request_parameters, indent=4)}")
-            response = self.web2.get_request(
+            response = Web2Client(dry_run=self.dry_run).get_request(
                 url=PropertyForSale.URL,
                 params=request_parameters,
             )
@@ -100,6 +100,10 @@ class PropertyGuru:
         if pages <= 0:
             log.print_fail("No pages to scrape!")
             return []
+
+        if pages > self.max_pages:
+            log.print_warn(f"Found {pages} pages, but only scraping {self.max_pages}...")
+            pages = self.max_pages
 
         properties.extend(self._get_property_info_from_page(soup))
 
@@ -126,7 +130,7 @@ class PropertyGuru:
 
         pages_parsed = 1
 
-        for page in random.sample(range(2, pages + 1), pages - 1):
+        for page in range(2, pages + 1):
             pages_parsed += 1
             try:
                 new_properties = self._get_property_from_page(
@@ -173,7 +177,7 @@ class PropertyGuru:
         browser_url = f"{url}?{browser_url_params}"
         log.print_normal(f"Equivalent search:\n{browser_url}")
 
-        response = self.web2.get_request(
+        response = Web2Client(dry_run=self.dry_run).get_request(
             url=url,
             params=parameters,
         )

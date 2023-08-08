@@ -24,6 +24,7 @@ class ScraperBot:
         telegram_channel_name: str,
         credentials_file: str,
         param_update_period: int = 60 * 30,
+        max_pages: int = 5,
         dry_run: bool = False,
         verbose: bool = False,
     ) -> None:
@@ -31,7 +32,7 @@ class ScraperBot:
         self.telegram_channel_name = telegram_channel_name
         self.telegram_channel_id = 0
         self.dry_run = dry_run
-        self.scraper = PropertyGuru(dry_run=dry_run, verbose=verbose)
+        self.scraper = PropertyGuru(max_pages=max_pages, dry_run=dry_run, verbose=verbose)
         self.param_update_period = param_update_period
 
         self.searches: T.List[Search] = []

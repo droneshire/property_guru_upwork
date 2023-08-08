@@ -17,6 +17,8 @@ class SearchParams(T.TypedDict):
     search: bool
     property_id: str
     freetext: str
+    sort: str
+    order: str
 
 
 SEARCH_PARAMS_DEFAULT: SearchParams = {
@@ -32,6 +34,8 @@ SEARCH_PARAMS_DEFAULT: SearchParams = {
     "search": True,
     "property_id": "0",
     "freetext": "",
+    "sort": "date",
+    "order": "desc",
 }
 
 TEST_PARAMS: SearchParams = {
@@ -47,6 +51,8 @@ TEST_PARAMS: SearchParams = {
     "search": True,
     "property_id": "71",
     "freetext": "",
+    "sort": "date",
+    "order": "desc",
 }
 
 

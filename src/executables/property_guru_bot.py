@@ -42,6 +42,17 @@ def parse_args() -> argparse.Namespace:
         help="Time between each parameter update (in seconds)",
         default=60 * 1,
     )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        help="Max pages to scrape per search",
+        default=5,
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Verbose mode",
+    )
 
     src_dir = os.path.dirname(os.path.dirname(__file__))
     root_dir = os.path.dirname(src_dir)
@@ -82,11 +93,13 @@ def run_loop(args: argparse.Namespace) -> None:
     telegram, telegram_channel_name = setup_telegram(args.dry_run)
 
     bot = ScraperBot(
-        telegram,
-        telegram_channel_name,
-        args.firebase_credentials_file,
-        args.param_update_period,
-        args.dry_run,
+        telegram_util=telegram,
+        telegram_channel_name=telegram_channel_name,
+        credentials_file=args.firebase_credentials_file,
+        param_update_period=args.param_update_period,
+        max_pages=args.max_pages,
+        dry_run=args.dry_run,
+        verbose=args.verbose,
     )
 
     bot.init()
