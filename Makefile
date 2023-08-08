@@ -8,6 +8,7 @@ MYPY_CONFIG=$(PY_PATH)/mypy_config.ini
 
 init:
 	$(PYTHON) -m venv venv
+	source ./venv/bin/activate
 
 install:
 	pip3 install -r requirements.txt

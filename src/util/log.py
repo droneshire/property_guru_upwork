@@ -81,6 +81,8 @@ class MultiHandler(logging.Handler):
 
 def clean_log_dir(log_dir: str) -> None:
     """Clean the log directory by removing all files and directories in the directory."""
+    if not os.path.isdir(log_dir):
+        return
     for filename in os.listdir(log_dir):
         file_path = os.path.join(log_dir, filename)
         try:
