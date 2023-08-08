@@ -1,13 +1,11 @@
 import json
-import os
 import time
 import typing as T
 
-import deepdiff
-
 from firebase.user import FirebaseUser
-from property_guru.data_types import SEARCH_PARAMS_DEFAULT, ListingDescription, SearchParams
+from property_guru.data_types import ListingDescription
 from property_guru.scraper import PropertyGuru
+from property_guru.search import Search
 from util import log
 from util.format import get_pretty_seconds
 from util.telegram_util import TelegramUtil
@@ -24,7 +22,6 @@ class ScraperBot:
         self,
         telegram_util: TelegramUtil,
         telegram_channel_name: str,
-        params_file: str,
         credentials_file: str,
         param_update_period: int = 60 * 30,
         dry_run: bool = False,
@@ -35,10 +32,9 @@ class ScraperBot:
         self.telegram_channel_id = 0
         self.dry_run = dry_run
         self.scraper = PropertyGuru(dry_run=dry_run, verbose=verbose)
-        self.params_file = params_file
-        self.params: T.Dict[str, SearchParams] = {}
         self.param_update_period = param_update_period
 
+        self.searches: T.List[Search] = []
         self.listing_ids: T.Dict[str, T.List[int]] = {}
 
         self.firebase_user: FirebaseUser = FirebaseUser(credentials_file, verbose)
@@ -55,20 +51,17 @@ class ScraperBot:
             self.telegram_channel_id = channel_id
 
     def check_and_update_params(self) -> None:
-        if self._try_to_load_params_from_file():
-            return
-
         self._try_to_update_data_from_firebase()
 
     def run(self) -> None:
         self.firebase_user.health_ping()
         self._check_firebase()
 
-        for user, params in self.params.items():
-            log.print_ok_blue(f"Checking properties for {user}...")
+        for query in self.searches:
+            log.print_ok_blue(f"Checking properties for {query.user}...")
             try:
                 current_listings: T.List[ListingDescription] = self.scraper.get_properties(
-                    user, params
+                    query.user, query.search
                 )
             except ValueError:
                 self.throttling_time = self.throttling_time * 2 + 60
@@ -77,26 +70,25 @@ class ScraperBot:
                 break
 
             if not current_listings:
-                self.listing_ids[user] = []
                 continue
 
             current_listings_by_id = {
                 int(listing["listing_id"]): listing for listing in current_listings
             }
 
-            previous_listings = self.listing_ids.get(user, [])
+            previous_listings = self.listing_ids.get(query.user, [])
             new_listing_ids = list(set(current_listings_by_id.keys()) - set(previous_listings))
 
             if not new_listing_ids:
                 continue
 
             log.print_ok(f"Found {len(new_listing_ids)} new listings!")
-            self.listing_ids[user] = list(current_listings_by_id.keys())
+            self.listing_ids[query.user] = list(current_listings_by_id.keys())
             for listing_id in new_listing_ids:
                 listing = current_listings_by_id[listing_id]
-                if not self._handle_new_listing(user, listing):
-                    log.print_warn(f"Failed to send message for {user}!")
-                    self.listing_ids[user].remove(listing_id)
+                if not self._handle_new_listing(query.user, listing):
+                    log.print_warn(f"Failed to send message for {query.user}!")
+                    self.listing_ids[query.user].remove(listing_id)
 
                 time.sleep(1)
 
@@ -129,65 +121,19 @@ class ScraperBot:
             log.print_fail("Failed to send message!")
             return False
 
-    def _try_to_load_params_from_file(self) -> bool:
-        if not os.path.exists(self.params_file):
-            return False
-
-        with open(self.params_file, "r", encoding="utf-8") as infile:
-            data = json.load(infile)
-
-        is_valid_data = False
-        if isinstance(data, dict):
-            for key in SEARCH_PARAMS_DEFAULT:
-                if key not in data:
-                    break
-            is_valid_data = True
-
-        if not is_valid_data:
-            log.print_fail("Invalid data in params.json!")
-            return False
-
-        self.params["from_file"] = data
-        log.print_normal(f"Updated params:\n{json.dumps(self.params, indent=4)}")
-        return True
-
     def _try_to_update_data_to_firebase(self) -> None:
         for user, ids in self.listing_ids.items():
             log.print_bold(f"Updating listing ids for {user} to firebase...")
             self.firebase_user.update_listing_ids(user, ids)
 
     def _try_to_update_data_from_firebase(self) -> None:
-        self.params = {}
+        self.searches = self.firebase_user.get_searches()
+        users = set(search.user for search in self.searches)
 
-        for user, info in self.firebase_user.get_search_params().items():
-            log.print_bold(f"Getting params for {user} from firebase...")
-            last_json = dict(self.params.get(user, {}))
-            new_json = dict(info)
-            diff = deepdiff.DeepDiff(last_json, new_json, ignore_order=True)
-            if diff:
-                diff_json = diff.to_json(indent=4, sort_keys=True, ensure_ascii=True)
-                log.print_normal(f"Params updated:\n{diff_json}")
-
-            if not info["property_id"]:
-                self.listing_ids[user] = []
-
-            self.params[user] = info
-
-        for user, ids in self.firebase_user.get_listing_ids().items():
-            if user not in self.params:
-                log.print_warn(f"Found listing ids for {user} w/out params. Removing cached ids")
-                self.listing_ids[user] = []
-                continue
-
-            log.print_bold(f"Getting listing ids for {user} from firebase...")
-            last_json = {"ids": sorted(self.listing_ids.get(user, []))}
-            new_json = {"ids": sorted(ids)}
-            diff = deepdiff.DeepDiff(last_json, new_json, ignore_order=True)
-            if diff:
-                diff_json = diff.to_json(indent=4, sort_keys=True, ensure_ascii=True)
-                log.print_normal(f"Listing ids updated:\n{diff_json}")
-
-            self.listing_ids[user] = ids
+        for user, _ in self.listing_ids.items():
+            if user not in users:
+                log.print_warn(f"Found user {user} w/out params. Removing cached params")
+                del self.listing_ids[user]
 
     def _check_firebase(self) -> None:
         update_from_firebase = False

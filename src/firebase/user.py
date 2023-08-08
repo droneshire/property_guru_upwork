@@ -12,8 +12,9 @@ from google.cloud.firestore_v1.base_document import DocumentSnapshot
 from google.cloud.firestore_v1.collection import CollectionReference
 from google.cloud.firestore_v1.watch import DocumentChange
 
-from firebase import data_types
-from property_guru.data_types import SearchParams
+from firebase import data_types as firebase_data_types
+from property_guru import data_types as property_guru_data_types
+from property_guru.search import Search
 from util import log
 from util.dict_util import check_dict_keys_recursive, patch_missing_keys_recursive, safe_get
 
@@ -40,7 +41,7 @@ class FirebaseUser:
 
         self.users_watcher = self.user_ref.on_snapshot(self._collection_snapshot_handler)
 
-        self.database_cache: T.Dict[str, data_types.User] = {}
+        self.database_cache: T.Dict[str, firebase_data_types.User] = {}
 
         self.callback_done: threading.Event = threading.Event()
         self.database_cache_lock: threading.Lock = threading.Lock()
@@ -101,20 +102,20 @@ class FirebaseUser:
 
         self.callback_done.set()
 
-    def _handle_firebase_update(self, user: str, db_user: data_types.User) -> None:
+    def _handle_firebase_update(self, user: str, db_user: firebase_data_types.User) -> None:
         log.print_normal(f"Checking to see if we need to update {user} databases...")
         old_db_user = copy.deepcopy(db_user)
 
         if not db_user:
-            db_user = copy.deepcopy(data_types.NULL_USER)
+            db_user = copy.deepcopy(firebase_data_types.NULL_USER)
             log.print_normal(
                 f"Initializing new user {user} in database:\n"
                 f"{json.dumps(db_user, indent=4, sort_keys=True)}"
             )
-        missing_keys = check_dict_keys_recursive(dict(data_types.NULL_USER), dict(db_user))
+        missing_keys = check_dict_keys_recursive(dict(firebase_data_types.NULL_USER), dict(db_user))
         if missing_keys:
             log.print_warn(f"Missing keys in user {user}:\n{missing_keys}")
-            patch_missing_keys_recursive(dict(data_types.NULL_USER), dict(db_user))
+            patch_missing_keys_recursive(dict(firebase_data_types.NULL_USER), dict(db_user))
 
         diff = deepdiff.DeepDiff(
             old_db_user,
@@ -173,54 +174,60 @@ class FirebaseUser:
             {"heartbeat": firestore.SERVER_TIMESTAMP}, merge=True
         )
 
-    def _get_users(self) -> T.Dict[str, data_types.User]:
+    def _get_users(self) -> T.Dict[str, firebase_data_types.User]:
         with self.database_cache_lock:
             return copy.deepcopy(self.database_cache)
 
-    def get_search_params(self) -> T.Dict[str, SearchParams]:
-        user_search_params = {}
+    def _get_search_params(
+        self, search_string: str, info: firebase_data_types.SearchParams
+    ) -> property_guru_data_types.SearchParams:
+        property_id = search_string.split("-")[-1]
+        free_text = ""
+
+        if isinstance(property_id, str) and not property_id.isdigit():
+            log.print_fail(f"Invalid property id {property_id}...trying free form search")
+            property_id = ""
+            free_text = search_string
+
+        search_params: property_guru_data_types.SearchParams = {
+            "minprice": info["minPrice"],
+            "maxprice": info["maxPrice"],
+            "beds": str(list(range(info["minBeds"], info["maxBeds"] + 1))),
+            "baths": str(
+                list(
+                    range(
+                        info["minBaths"],
+                        info["maxBaths"] + 1,
+                    )
+                )
+            ),
+            "minsize": info["minSize"],
+            "maxsize": info["maxSize"],
+            "newProject": "all",
+            "search": True,
+            "listing_type": "sale",
+            "market": "residential",
+            "property_id": property_id,
+            "freetext": free_text,
+        }
+        return search_params
+
+    def get_searches(self) -> T.List[Search]:
+        searches = []
         with self.database_cache_lock:
             for user, info in self.database_cache.items():
-                if not info["searchParams"].get("searchString", ""):
+                search_string = info["searchParams"].get("searchString", "")
+                if not search_string:
                     continue
 
-                property_id = info["searchParams"]["searchString"].split("-")[-1]
-                free_text = ""
+                search_strings = (s.strip() for s in search_string.split(","))
 
-                if isinstance(property_id, str) and not property_id.isdigit():
-                    log.print_fail(f"Invalid property id {property_id}...trying free form search")
-                    property_id = ""
-                    free_text = info["searchParams"]["searchString"]
+                for search_string in search_strings:
+                    log.print_normal(f"Adding search `{search_string}` for {user}")
+                    search_params = self._get_search_params(search_string, info["searchParams"])
+                    searches.append(Search(user, search_params))
 
-                search_params: SearchParams = {
-                    "minprice": info["searchParams"]["minPrice"],
-                    "maxprice": info["searchParams"]["maxPrice"],
-                    "beds": str(
-                        list(
-                            range(
-                                info["searchParams"]["minBeds"], info["searchParams"]["maxBeds"] + 1
-                            )
-                        )
-                    ),
-                    "baths": str(
-                        list(
-                            range(
-                                info["searchParams"]["minBaths"],
-                                info["searchParams"]["maxBaths"] + 1,
-                            )
-                        )
-                    ),
-                    "minsize": info["searchParams"]["minSize"],
-                    "maxsize": info["searchParams"]["maxSize"],
-                    "newProject": "all",
-                    "search": True,
-                    "listing_type": "sale",
-                    "market": "residential",
-                    "property_id": property_id,
-                    "freetext": free_text,
-                }
-                user_search_params[user] = search_params
-        return user_search_params
+        return searches
 
     def get_listing_ids(self) -> T.Dict[str, T.List[int]]:
         user_listing_ids = {}
