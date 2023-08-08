@@ -52,10 +52,10 @@ class PropertyGuru:
 
         request_parameters = {key: value for key, value in parameters.items() if value}
 
-        log.print_normal(DIVIDER_STRING)
-
         wait_time = random.randint(*self.WAIT_RANGE)
         wait(wait_time)
+
+        log.print_normal(DIVIDER_STRING)
 
         log.print_bright("PAGE 1")
         log.print_ok_blue(
