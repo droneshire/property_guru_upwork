@@ -19,6 +19,7 @@ class SearchParams(T.TypedDict):
     freetext: str
     sort: str
     order: str
+    property_type: str
 
 
 SEARCH_PARAMS_DEFAULT: SearchParams = {
@@ -36,6 +37,7 @@ SEARCH_PARAMS_DEFAULT: SearchParams = {
     "freetext": "",
     "sort": "date",
     "order": "desc",
+    "property_type": "[H, C, L]",
 }
 
 TEST_PARAMS: SearchParams = {
@@ -53,6 +55,7 @@ TEST_PARAMS: SearchParams = {
     "freetext": "",
     "sort": "date",
     "order": "desc",
+    "property_type": "[H, C, L]",
 }
 
 

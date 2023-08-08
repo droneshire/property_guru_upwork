@@ -189,6 +189,11 @@ class FirebaseUser:
             property_id = ""
             free_text = search_string
 
+        property_type = ["C", "L"]
+
+        if info["includeHbd"]:
+            property_type.append("H")
+
         search_params: property_guru_data_types.SearchParams = {
             "minprice": info["minPrice"],
             "maxprice": info["maxPrice"],
@@ -211,6 +216,7 @@ class FirebaseUser:
             "freetext": free_text,
             "sort": "date",
             "order": "desc",
+            "property_type": str(property_type),
         }
         return search_params
 

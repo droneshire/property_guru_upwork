@@ -36,6 +36,7 @@ class SearchParams(T.TypedDict):
     minPrice: int
     maxSize: int
     minSize: int
+    includeHbd: bool
 
 
 class User(T.TypedDict):
@@ -64,6 +65,7 @@ NULL_USER = User(
         minPrice=0,
         maxSize=10000,
         minSize=0,
+        includeHbd=False,
     ),
     listingIds=[],
 )
