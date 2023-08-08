@@ -65,7 +65,7 @@ NULL_USER = User(
         minPrice=0,
         maxSize=10000,
         minSize=0,
-        includeHbd=False,
+        includeHbd=True,
     ),
     listingIds=[],
 )
