@@ -38,4 +38,7 @@ test:
 run_bot:
 	$(RUN_PY) executables.property_guru_bot --log-level=INFO
 
-.PHONY: install format check_format check_types pylint lint test creator_bot account_bot server
+run_monitor:
+	$(RUN_PY) executables.reset_monitor
+
+.PHONY: init install format check_format mypy pylint autopep8 isort lint test run_bot run_monitor
