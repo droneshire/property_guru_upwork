@@ -196,24 +196,24 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
     )
 
 
-print_ok_blue = make_formatter_printer(Colors.OKBLUE.value, log_level=loggin.INFO)
-print_ok = make_formatter_printer(Colors.OKGREEN.value, log_level=loggin.INFO)
-print_bright = make_formatter_printer(Colors.OKCYAN.value, log_level=loggin.INFO)
-print_warn = make_formatter_printer(Colors.WARNING.value, log_level=loggin.CRITICAL)
-print_fail = make_formatter_printer(Colors.FAIL.value, log_level=loggin.CRITICAL)
-print_bold = make_formatter_printer(Colors.BOLD.value, log_level=loggin.INFO)
-print_normal = make_formatter_printer(Colors.ENDC.value, log_level=loggin.INFO)
+print_ok_blue = make_formatter_printer(Colors.OKBLUE.value, log_level=logging.INFO)
+print_ok = make_formatter_printer(Colors.OKGREEN.value, log_level=logging.INFO)
+print_bright = make_formatter_printer(Colors.OKCYAN.value, log_level=logging.INFO)
+print_warn = make_formatter_printer(Colors.WARNING.value, log_level=logging.CRITICAL)
+print_fail = make_formatter_printer(Colors.FAIL.value, log_level=logging.CRITICAL)
+print_bold = make_formatter_printer(Colors.BOLD.value, log_level=logging.INFO)
+print_normal = make_formatter_printer(Colors.ENDC.value, log_level=logging.INFO)
 print_normal_arrow = make_formatter_printer(
-    Colors.ENDC.value, prefix=Prefixes.ARROW.value, log_level=loggin.INFO
+    Colors.ENDC.value, prefix=Prefixes.ARROW.value, log_level=logging.INFO
 )
 print_ok_arrow = make_formatter_printer(
-    Colors.OKGREEN.value, prefix=Prefixes.ARROW.value, log_level=loggin.CRITICAL
+    Colors.OKGREEN.value, prefix=Prefixes.ARROW.value, log_level=logging.CRITICAL
 )
 print_ok_blue_arrow = make_formatter_printer(
-    Colors.OKBLUE.value, prefix=Prefixes.ARROW.value, log_level=loggin.INFO
+    Colors.OKBLUE.value, prefix=Prefixes.ARROW.value, log_level=logging.INFO
 )
 print_fail_arrow = make_formatter_printer(
-    Colors.FAIL.value, prefix=Prefixes.ARROW.value, log_level=loggin.CRITICAL
+    Colors.FAIL.value, prefix=Prefixes.ARROW.value, log_level=logging.CRITICAL
 )
 
 format_ok_blue = make_formatter_printer(Colors.OKBLUE.value, return_formatter=True)
