@@ -52,6 +52,8 @@ class PropertyGuru:
 
         request_parameters = {key: value for key, value in parameters.items() if value}
 
+        del request_parameters["property_type"]
+
         wait_time = random.randint(*self.WAIT_RANGE)
         wait(wait_time)
 
